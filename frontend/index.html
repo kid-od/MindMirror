@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PsycheArchive</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-light.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    <div id="app">
+        <div v-if="!isAuthenticated" class="auth-screen stitch-auth-shell">
+            <div class="auth-preferences">
+                <button class="preference-toggle" @click="toggleLocale">{{ t('app.localeToggle') }}</button>
+                <button class="preference-toggle" @click="toggleTheme">{{ themeToggleLabel() }}</button>
+            </div>
+            <section class="auth-panel stitch-auth-panel">
+                <div class="auth-glow stitch-auth-glow auth-glow-primary stitch-auth-glow-primary"></div>
+                <div class="auth-glow stitch-auth-glow auth-glow-tertiary stitch-auth-glow-secondary"></div>
+                <div class="auth-brand stitch-auth-brand">
+                    <div class="auth-avatar">P</div>
+                    <div>
+                        <p class="auth-kicker stitch-overline">PsycheArchive</p>
+                        <h1>{{ t('app.subtitle') }}</h1>
+                        <p class="auth-copy">{{ t('app.authCopy') }}</p>
+                    </div>
+                </div>
+                <div class="auth-fields">
+                    <input v-model="authForm.username" type="text" :placeholder="t('auth.username')">
+                    <input v-model="authForm.password" type="password" :placeholder="t('auth.password')">
+                    <select v-if="authMode === 'register'" v-model="authForm.role">
+                        <option value="user">{{ t('auth.roleUser') }}</option>
+                        <option value="admin">{{ t('auth.roleAdmin') }}</option>
+                    </select>
+                    <input
+                        v-if="authMode === 'register' && authForm.role === 'admin'"
+                        v-model="authForm.admin_code"
+                        type="password"
+                        :placeholder="t('auth.adminInvite')"
+                    >
+                    <button class="stitch-primary auth-submit" :disabled="authLoading" @click="handleAuthSubmit">
+                        {{ authLoading ? t('auth.loginSubmitting') : (authMode === 'login' ? t('auth.login') : t('auth.register')) }}
+                    </button>
+                    <button class="ghost-auth" @click="authMode = authMode === 'login' ? 'register' : 'login'">
+                        {{ authMode === 'login' ? t('auth.toRegister') : t('auth.toLogin') }}
+                    </button>
+                </div>
+            </section>
+        </div>
+
+        <div v-else class="psyche-shell stitch-shell">
+            <aside class="psyche-sidebar stitch-sidebar">
+                <div class="psyche-brand stitch-brand-block">
+                    <div class="psyche-avatar">{{ userInitial }}</div>
+                    <div>
+                        <h1>PsycheArchive</h1>
+                        <p>{{ t('app.subtitle') }}</p>
+                    </div>
+                </div>
+
+                <nav class="psyche-nav stitch-nav">
+                    <button @click="setCurrentView('dashboard')" :class="['psyche-nav-item', { active: currentView === 'dashboard' }]">
+                        <span class="app-icon app-icon-dashboard" aria-hidden="true"></span>
+                        {{ t('nav.dashboard') }}
+                    </button>
+                    <button @click="setCurrentView('knowledge')" :class="['psyche-nav-item', { active: currentView === 'knowledge' }]" v-if="isAdmin">
+                        <span class="app-icon app-icon-database" aria-hidden="true"></span>
+                        {{ t('nav.knowledge') }}
+                    </button>
+                    <button @click="setCurrentView('essays')" :class="['psyche-nav-item', { active: currentView === 'essays' }]">
+                        <span class="app-icon app-icon-article" aria-hidden="true"></span>
+                        {{ t('nav.essays') }}
+                    </button>
+                    <button @click="setCurrentView('chat')" :class="['psyche-nav-item', { active: currentView === 'chat' }]">
+                        <span class="app-icon app-icon-psychology" aria-hidden="true"></span>
+                        {{ t('nav.chat') }}
+                    </button>
+                    <button @click="setCurrentView('settings')" :class="['psyche-nav-item', { active: currentView === 'settings' }]">
+                        <span class="app-icon app-icon-settings" aria-hidden="true"></span>
+                        {{ t('nav.settings') }}
+                    </button>
+                </nav>
+
+                <div class="stitch-profile-card">
+                    <div class="psyche-profile">
+                        <div class="psyche-profile-icon">{{ userInitial }}</div>
+                        <div>
+                            <strong>{{ currentUser.username }}</strong>
+                            <span>{{ currentUser.role === 'admin' ? t('profile.admin') : t('profile.user') }}</span>
+                        </div>
+                    </div>
+                    <button class="psyche-logout" @click="handleLogout">{{ t('profile.logout') }}</button>
+                </div>
+            </aside>
+
+            <main class="psyche-main stitch-main">
+                <header class="psyche-topbar stitch-topbar">
+                    <label class="psyche-search stitch-search">
+                        <span class="app-icon app-icon-search" aria-hidden="true"></span>
+                        <input v-model="globalSearch" :placeholder="currentSearchPlaceholder">
+                    </label>
+                    <div class="psyche-top-actions">
+                        <div class="topbar-preferences">
+                            <button class="preference-toggle" @click="toggleLocale">{{ t('app.localeToggle') }}</button>
+                            <button class="preference-toggle" @click="toggleTheme">{{ themeToggleLabel() }}</button>
+                        </div>
+                        <span class="app-icon app-icon-notifications" aria-hidden="true"></span>
+                        <span class="app-icon app-icon-account-circle" aria-hidden="true"></span>
+                    </div>
+                </header>
+
+                <section v-if="currentView === 'dashboard'" class="psyche-canvas dashboard-view stitch-dashboard-grid">
+                    <section class="quote-card">
+                        <span class="app-icon app-icon-format-quote quote-icon" aria-hidden="true"></span>
+                        <h2>{{ dailyQuoteLoading ? t('dashboard.quoteLoading') : `"${dailyQuote.text}"` }}</h2>
+                        <p v-if="!dailyQuoteLoading">— {{ dailyQuote.author }}</p>
+                    </section>
+
+                    <section class="bento-grid">
+                        <article class="bento-card stat-card">
+                            <span class="app-icon app-icon-edit-document card-icon" aria-hidden="true"></span>
+                            <p>{{ t('dashboard.totalEssays') }}</p>
+                            <strong>{{ essays.length }}</strong>
+                        </article>
+
+                        <article class="bento-card themes-card">
+                            <div class="card-title">
+                                <span class="app-icon app-icon-psychology-alt" aria-hidden="true"></span>
+                                <h3>{{ t('dashboard.topThemes') }}</h3>
+                            </div>
+                            <div class="chip-row">
+                                <span v-for="theme in topThemes" :key="theme" class="insight-chip">{{ theme }}</span>
+                            </div>
+                        </article>
+
+                        <article class="bento-card coverage-card">
+                            <div class="card-title">
+                                <span class="app-icon app-icon-schema" aria-hidden="true"></span>
+                                <h3>{{ t('dashboard.knowledgeCoverage') }}</h3>
+                            </div>
+                            <div class="coverage-bar">
+                                <span :style="{ width: knowledgeCoveragePercent + '%' }"></span>
+                            </div>
+                            <div class="coverage-meta">
+                                <span>{{ documents.length }} {{ t('dashboard.publicDocs') }}</span>
+                                <span>{{ essays.length }} {{ t('dashboard.privateEssays') }}</span>
+                            </div>
+                        </article>
+
+                        <article class="bento-card deep-card">
+                            <span class="app-icon app-icon-insights card-icon" aria-hidden="true"></span>
+                            <p>{{ t('dashboard.deepSessions') }}</p>
+                            <strong>{{ sessions.length }}</strong>
+                            <button @click="startNewReflection">
+                                {{ t('dashboard.startSession') }}
+                                <span class="app-icon app-icon-arrow-forward" aria-hidden="true"></span>
+                            </button>
+                        </article>
+                    </section>
+
+                    <section class="activity-grid">
+                        <article class="activity-card">
+                            <div class="activity-head">
+                                <h3>{{ t('dashboard.recentEssays') }}</h3>
+                                <button @click="setCurrentView('essays')">{{ t('dashboard.viewAll') }}</button>
+                            </div>
+                            <div v-if="recentEssays.length" class="activity-list">
+                                <button v-for="essay in recentEssays" :key="essay.filename" class="activity-entry" @click="openEssayInChat(essay)">
+                                    <span>{{ displayEssayDate(essay) }}</span>
+                                    <strong>{{ essayTitle(essay.filename) }}</strong>
+                                </button>
+                            </div>
+                            <div v-else class="empty-copy">
+                                {{ t('dashboard.emptyEssays') }}
+                            </div>
+                        </article>
+
+                        <article class="activity-card">
+                            <div class="activity-head">
+                                <h3>{{ t('dashboard.lastAnalysis') }}</h3>
+                                <button @click="setCurrentView('chat')">{{ t('dashboard.openChat') }}</button>
+                            </div>
+                            <div v-if="latestSession" class="analysis-highlight">
+                                <span class="status-pill">{{ t('dashboard.knowledgeActive') }}</span>
+                                <strong>{{ sessionDisplayTitle(latestSession) }}</strong>
+                                <p>{{ t('dashboard.updatedMessages', { date: formatDate(latestSession.updated_at), count: latestSession.message_count }) }}</p>
+                            </div>
+                            <div v-else class="empty-copy">
+                                {{ t('dashboard.ready') }}
+                            </div>
+                        </article>
+                    </section>
+                </section>
+
+                <section v-else-if="currentView === 'knowledge'" class="psyche-canvas knowledge-view stitch-knowledge-stage">
+                    <article v-if="!isAdmin" class="restricted-card">
+                        <h2>{{ t('knowledge.title') }}</h2>
+                        <p>{{ t('knowledge.restricted') }}</p>
+                    </article>
+
+                    <template v-else>
+                        <div class="page-hero">
+                            <div>
+                                <h2>{{ t('knowledge.title') }}</h2>
+                                <p>{{ t('knowledge.hero') }}</p>
+                            </div>
+                            <button class="stitch-primary" @click="$refs.knowledgeFileInput.click()">
+                                <span class="app-icon app-icon-cloud-upload" aria-hidden="true"></span>
+                                {{ t('knowledge.newUpload') }}
+                            </button>
+                        </div>
+
+                        <input
+                            ref="knowledgeFileInput"
+                            type="file"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.md,.markdown"
+                            multiple
+                            hidden
+                            @change="handleKnowledgeFileSelect"
+                        >
+
+                        <div class="upload-dropzone" @click="$refs.knowledgeFileInput.click()">
+                            <span class="app-icon app-icon-library-add" aria-hidden="true"></span>
+                            <h3>{{ t('knowledge.dropTitle') }}</h3>
+                            <p>{{ t('knowledge.dropBody') }}</p>
+                            <strong>{{ t('knowledge.browse') }} <span class="app-icon app-icon-arrow-forward" aria-hidden="true"></span></strong>
+                        </div>
+
+                        <div v-if="knowledgeUploadProgress || knowledgeUploadError" class="stitch-upload-status">
+                            <p>{{ knowledgeUploadProgress }}</p>
+                            <pre v-if="knowledgeUploadError">{{ knowledgeUploadError }}</pre>
+                        </div>
+
+                        <section class="document-stack">
+                            <article v-if="documentsLoading" class="knowledge-card">
+                                <p>{{ t('knowledge.loading') }}</p>
+                            </article>
+                            <article v-else-if="filteredDocuments.length === 0" class="knowledge-card">
+                                <p>{{ t('knowledge.empty') }}</p>
+                            </article>
+                            <article v-for="doc in filteredDocuments" :key="doc.filename" class="knowledge-card">
+                                <div class="document-meta">
+                                    <span class="insight-chip">{{ doc.file_type }}</span>
+                                    <span>{{ doc.chunk_count }} {{ locale === 'zh' ? '个分块' : 'chunks' }}</span>
+                                </div>
+                                <h3>{{ doc.filename }}</h3>
+                                <p>{{ t('knowledge.sourceCaption') }}</p>
+                                <div class="document-actions">
+                                    <button class="ghost-action" @click="deleteDocument(doc.filename)">{{ t('knowledge.delete') }}</button>
+                                </div>
+                            </article>
+                        </section>
+                    </template>
+                </section>
+
+                <section v-else-if="currentView === 'essays'" class="psyche-canvas essays-view stitch-essays-grid">
+                    <div class="page-hero">
+                        <div>
+                            <h2>{{ t('essays.title') }}</h2>
+                            <p>{{ t('essays.hero') }}</p>
+                        </div>
+                        <button class="stitch-primary" @click="$refs.essayFileInput.click()">
+                            <span class="app-icon app-icon-edit-document" aria-hidden="true"></span>
+                            {{ t('essays.newEntry') }}
+                        </button>
+                    </div>
+
+                    <input
+                        ref="essayFileInput"
+                        type="file"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.md,.markdown"
+                        multiple
+                        hidden
+                        @change="handleEssayFileSelect"
+                    >
+
+                    <div v-if="essayUploadProgress || essayUploadError" class="stitch-upload-status">
+                        <p>{{ essayUploadProgress }}</p>
+                        <pre v-if="essayUploadError">{{ essayUploadError }}</pre>
+                    </div>
+
+                    <div v-if="essaysLoading" class="empty-garden">
+                        <h3>{{ t('essays.loading') }}</h3>
+                        <p>{{ t('essays.loadingBody') }}</p>
+                    </div>
+
+                    <div v-else-if="filteredEssays.length === 0" class="empty-garden">
+                        <h3>{{ t('essays.empty') }}</h3>
+                        <p>{{ t('essays.emptyBody') }}</p>
+                    </div>
+
+                    <div v-else class="essay-grid">
+                        <article v-for="(essay, index) in filteredEssays" :key="essay.filename" :class="['essay-card', { featured: index % 3 === 0 }]">
+                            <div class="essay-meta">
+                                <span>{{ displayEssayDate(essay) }}</span>
+                                <span>{{ t('essays.analyzed') }}</span>
+                            </div>
+                            <h3>{{ essayTitle(essay.filename) }}</h3>
+                            <p>{{ essay.chunk_count }} {{ t('essays.chunkLabel') }}</p>
+                            <div class="essay-card-footer">
+                                <span class="insight-chip">{{ essay.file_type }}</span>
+                                <div class="essay-card-actions">
+                                    <button class="ghost-action" @click="deleteEssay(essay.filename)">{{ t('essays.delete') }}</button>
+                                    <button @click="openEssayInChat(essay)">
+                                        {{ t('essays.viewInsights') }}
+                                        <span class="app-icon app-icon-arrow-forward" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section v-else-if="currentView === 'chat'" class="psyche-chat-layout stitch-chat-layout">
+                    <aside class="reflection-list">
+                        <div class="activity-head">
+                            <h2>{{ t('chat.recents') }}</h2>
+                            <button @click="handleNewChat">{{ t('chat.new') }}</button>
+                        </div>
+                        <p class="reflection-section-label">{{ t('chat.quickPrompts') }}</p>
+                        <div class="reflection-actions">
+                            <button
+                                v-for="prompt in chatSuggestions"
+                                :key="prompt"
+                                class="reflection-chip"
+                                @click="applyChatSuggestion(prompt)"
+                            >
+                                {{ prompt }}
+                            </button>
+                        </div>
+                        <div class="reflection-session-list">
+                            <div
+                                v-for="session in filteredSessions"
+                                :key="session.session_id"
+                                :class="['reflection-session-row', { active: session.session_id === sessionId }]"
+                            >
+                                <button
+                                    :class="['reflection-session', { active: session.session_id === sessionId }]"
+                                    :title="formatDate(session.updated_at)"
+                                    @click="loadSession(session.session_id)"
+                                >
+                                    <strong>{{ sessionDisplayTitle(session) }}</strong>
+                                </button>
+                                <button
+                                    class="session-delete"
+                                    @click.stop="deleteSession(session.session_id)"
+                                    :aria-label="t('chat.deleteSession')"
+                                    :title="t('chat.deleteSession')"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                            <p v-if="filteredSessions.length === 0" class="empty-copy">{{ t('chat.emptySessions') }}</p>
+                        </div>
+                    </aside>
+
+                    <section class="deep-chat">
+                        <div class="deep-chat-header">
+                            <div>
+                                <h2>{{ t('chat.title') }}</h2>
+                                <p>{{ t('chat.subtitle') }}</p>
+                            </div>
+                            <span class="kb-active">
+                                <span class="app-icon app-icon-psychology-alt" aria-hidden="true"></span>
+                                {{ t('chat.knowledgeActive') }}
+                            </span>
+                        </div>
+
+                        <div ref="assistantMessages" class="deep-chat-messages">
+                            <div v-if="messages.length === 0" class="curator-welcome">
+                                <h3>{{ t('chat.welcomeTitle') }}</h3>
+                                <p>{{ t('chat.welcomeBody') }}</p>
+                            </div>
+
+                            <article v-for="(msg, index) in messages" :key="index" :class="['deep-message', msg.isUser ? 'from-user' : 'from-curator']">
+                                <div v-if="msg.isUser" class="user-bubble">{{ msg.text }}</div>
+
+                                <div v-else class="curator-card">
+                                    <div class="curator-label">
+                                        <span class="app-icon app-icon-auto-awesome" aria-hidden="true"></span>
+                                        <strong>{{ t('app.subtitle') }}</strong>
+                                    </div>
+
+                                    <div v-if="msg.isThinking && !msg.text" class="thinking-text">{{ t('chat.thinking') }}</div>
+                                    <div v-else class="markdown-body" v-html="parseMarkdown(msg.text)"></div>
+
+                                    <div v-if="msg.ragTrace && msg.ragTrace.retrieved_chunks && msg.ragTrace.retrieved_chunks.length" class="citation-stack">
+                                        <div v-for="(chunk, chunkIndex) in msg.ragTrace.retrieved_chunks.slice(0, 3)" :key="chunkIndex" class="citation-card">
+                                            <span class="app-icon app-icon-menu-book" aria-hidden="true"></span>
+                                            <div>
+                                                <h4>{{ t('chat.references', { filename: chunk.filename }) }}</h4>
+                                                <p>{{ shortChunkText(chunk.text) }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="analysis-options">
+                                        <span>{{ t('chat.options') }}</span>
+                                        <div class="analysis-chip-row">
+                                            <button @click="applyChatSuggestion(chatSuggestions[0])">{{ t('chat.optionOrigin') }}</button>
+                                            <button @click="applyChatSuggestion(chatSuggestions[1])">{{ t('chat.optionGains') }}</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+
+                        <div class="deep-input-area">
+                            <textarea
+                                ref="textarea"
+                                v-model="userInput"
+                                rows="1"
+                                :placeholder="t('chat.inputPlaceholder')"
+                                @keydown="handleKeyDown"
+                                @input="autoResize"
+                                @compositionstart="handleCompositionStart"
+                                @compositionend="handleCompositionEnd"
+                            ></textarea>
+                            <button v-if="isLoading" class="send-reflection" @click="handleStop">
+                                <span class="app-icon app-icon-stop" aria-hidden="true"></span>
+                            </button>
+                            <button v-else class="send-reflection" @click="handleSend">
+                                <span class="app-icon app-icon-send" aria-hidden="true"></span>
+                            </button>
+                            <small>{{ t('chat.disclaimer') }}</small>
+                        </div>
+                    </section>
+                </section>
+
+                <section v-else class="psyche-canvas settings-view stitch-settings-grid">
+                    <div class="page-hero compact-hero">
+                        <div>
+                            <h2>{{ t('settings.title') }}</h2>
+                            <p>{{ t('settings.subtitle') }}</p>
+                        </div>
+                    </div>
+
+                    <section class="settings-grid">
+                        <article class="settings-card">
+                            <span class="status-pill">{{ currentUser.role === 'admin' ? t('settings.admin') : t('settings.user') }}</span>
+                            <h3>{{ currentUser.username }}</h3>
+                            <p>{{ t('settings.signedIn') }}</p>
+                        </article>
+                        <article class="settings-card">
+                            <h3>{{ t('settings.totals') }}</h3>
+                            <p>{{ documents.length }} {{ t('settings.publicDocs') }}</p>
+                            <p>{{ essays.length }} {{ t('settings.privateEssays') }}</p>
+                            <p>{{ sessions.length }} {{ t('settings.pastReflections') }}</p>
+                        </article>
+                    </section>
+                </section>
+            </main>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

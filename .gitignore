@@ -1,0 +1,25 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.pytest_cache/
+
+# Virtual environments
+.venv/
+.env
+.worktrees/
+.superpowers/
+
+# docker / local runtime state
+volumes/
+data/
+
+# OS files
+.DS_Store
+
+# local experiments / internal planning
+langchain-study/
+docs/superpowers/
