@@ -13,6 +13,10 @@ from agent import chat_with_agent, chat_with_agent_stream, storage
 from auth import authenticate_user, create_access_token, get_current_user, get_db, get_password_hash, require_admin, resolve_role
 from document_loader import DocumentLoader
 from embedding import embedding_service
+try:
+    from essay_store import EssayStore
+except ModuleNotFoundError:
+    from backend.essay_store import EssayStore
 from milvus_client import MilvusManager
 from milvus_writer import MilvusWriter
 from models import User
@@ -53,11 +57,25 @@ DATA_DIR = BASE_DIR.parent / "data"
 UPLOAD_DIR = DATA_DIR / "documents"
 ESSAY_UPLOAD_DIR = DATA_DIR / "essays"
 BASE_URL = normalize_base_url(os.getenv("BASE_URL"))
+KNOWLEDGE_COLLECTION = os.getenv("MILVUS_KNOWLEDGE_COLLECTION") or os.getenv("MILVUS_COLLECTION", "embeddings_collection")
+ESSAY_COLLECTION = os.getenv("MILVUS_ESSAY_COLLECTION", "essay_chunks")
+
+
+def _create_milvus_manager(collection_name: str) -> MilvusManager:
+    try:
+        return MilvusManager(collection_name=collection_name)
+    except TypeError:
+        return MilvusManager()
 
 loader = DocumentLoader()
 parent_chunk_store = ParentChunkStore()
-milvus_manager = MilvusManager()
-milvus_writer = MilvusWriter(embedding_service=embedding_service, milvus_manager=milvus_manager)
+essay_store = EssayStore()
+knowledge_milvus_manager = _create_milvus_manager(KNOWLEDGE_COLLECTION)
+essay_milvus_manager = _create_milvus_manager(ESSAY_COLLECTION)
+legacy_essay_milvus_manager = None if ESSAY_COLLECTION == KNOWLEDGE_COLLECTION else _create_milvus_manager(KNOWLEDGE_COLLECTION)
+milvus_manager = knowledge_milvus_manager
+milvus_writer = MilvusWriter(embedding_service=embedding_service, milvus_manager=knowledge_milvus_manager)
+essay_milvus_writer = MilvusWriter(embedding_service=embedding_service, milvus_manager=essay_milvus_manager)
 
 router = APIRouter()
 
@@ -99,9 +117,9 @@ def _public_document_filter(filename: str | None = None) -> str:
     )
 
 
-def _remove_bm25_stats(filter_expr: str) -> None:
+def _remove_bm25_stats(manager: MilvusManager, filter_expr: str) -> None:
     """删除 Milvus 中指定作用域 chunk 前，先从持久化 BM25 统计中扣减。"""
-    rows = milvus_manager.query_all(
+    rows = manager.query_all(
         filter_expr=filter_expr,
         output_fields=["text"],
     )
@@ -171,23 +189,23 @@ def _process_uploaded_document_sync(
             progress_callback(build_upload_progress_event(stage, detail=detail, state=state))
 
     try:
-        ensure_tcp_service(milvus_manager.host, int(milvus_manager.port), "Milvus")
+        ensure_tcp_service(knowledge_milvus_manager.host, int(knowledge_milvus_manager.port), "Milvus")
     except RuntimeError as exc:
         raise HTTPException(
             status_code=503,
             detail=f"{exc} 请先执行 `docker compose up -d` 启动向量库依赖。",
         )
 
-    milvus_manager.init_collection()
+    knowledge_milvus_manager.init_collection()
 
     delete_expr = _build_scoped_filter(filename, metadata)
     emit("parsing", f"正在解析 {filename}")
     try:
-        _remove_bm25_stats(delete_expr)
+        _remove_bm25_stats(knowledge_milvus_manager, delete_expr)
     except Exception:
         pass
     try:
-        milvus_manager.delete(delete_expr)
+        knowledge_milvus_manager.delete(delete_expr)
     except Exception:
         pass
     try:
@@ -228,6 +246,82 @@ def _process_uploaded_document_sync(
             f"成功上传并处理 {filename}，叶子分块 {len(leaf_docs)} 个，"
             f"父级分块 {len(parent_docs)} 个（存入 PostgreSQL）"
         ),
+    )
+
+
+def _process_uploaded_essay_sync(
+    filename: str,
+    file_path: Path,
+    owner_id: str,
+    progress_callback=None,
+) -> DocumentUploadResponse:
+    metadata = _build_scope_metadata("private", owner_id, "essay")
+
+    def emit(stage: str, detail: str, state: str = "running") -> None:
+        if progress_callback:
+            progress_callback(build_upload_progress_event(stage, detail=detail, state=state))
+
+    try:
+        ensure_tcp_service(essay_milvus_manager.host, int(essay_milvus_manager.port), "Milvus")
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"{exc} 请先执行 `docker compose up -d` 启动向量库依赖。",
+        )
+
+    essay_milvus_manager.init_collection()
+    delete_expr = _private_essay_filter(filename, owner_id)
+    emit("parsing", f"正在解析 {filename}")
+    try:
+        _remove_bm25_stats(essay_milvus_manager, delete_expr)
+    except Exception:
+        pass
+    try:
+        essay_milvus_manager.delete(delete_expr)
+    except Exception:
+        pass
+    if legacy_essay_milvus_manager:
+        try:
+            _remove_bm25_stats(legacy_essay_milvus_manager, delete_expr)
+        except Exception:
+            pass
+        try:
+            legacy_essay_milvus_manager.delete(delete_expr)
+        except Exception:
+            pass
+        try:
+            _delete_parent_chunks_for_scope(filename, metadata)
+        except Exception:
+            pass
+
+    try:
+        essay_payload = loader.load_essay_document(str(file_path), filename, metadata=metadata)
+    except Exception as doc_err:
+        raise HTTPException(status_code=500, detail=f"文档处理失败: {doc_err}")
+
+    content = (essay_payload.get("content") or "").strip()
+    essay_chunks = essay_payload.get("chunks") or []
+    if not content or not essay_chunks:
+        raise HTTPException(status_code=500, detail="随笔处理失败，未能提取正文")
+
+    emit("parsing", f"随笔解析完成，正文长度 {len(content)} 字", state="completed")
+    emit("chunking", f"正在整理随笔分块，共 {len(essay_chunks)} 个")
+    essay_record = essay_store.upsert(
+        owner_id=owner_id,
+        filename=filename,
+        content=content,
+        file_type=essay_payload.get("file_type", ""),
+        file_path=str(file_path),
+        chunk_count=len(essay_chunks),
+    )
+    emit("chunking", f"随笔正文已入库，标题《{essay_record.get('title', filename)}》", state="completed")
+    essay_milvus_writer.write_documents(essay_chunks, progress_callback=progress_callback)
+    emit("indexing", f"随笔索引完成，共 {len(essay_chunks)} 个检索分块", state="completed")
+
+    return DocumentUploadResponse(
+        filename=filename,
+        chunks_processed=len(essay_chunks),
+        message=f"成功上传随笔 {filename}，正文已保存并建立 {len(essay_chunks)} 个检索分块",
     )
 
 
@@ -304,6 +398,7 @@ async def daily_quote(
 async def get_session_messages(session_id: str, current_user: User = Depends(get_current_user)):
     """获取指定会话的所有消息"""
     try:
+        session_meta = storage.get_session_metadata(current_user.username, session_id)
         messages = [
             MessageInfo(
                 type=msg["type"],
@@ -313,7 +408,7 @@ async def get_session_messages(session_id: str, current_user: User = Depends(get
             )
             for msg in storage.get_session_messages(current_user.username, session_id)
         ]
-        return SessionMessagesResponse(messages=messages)
+        return SessionMessagesResponse(messages=messages, **session_meta)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -347,7 +442,16 @@ async def delete_session(session_id: str, current_user: User = Depends(get_curre
 async def chat_endpoint(request: ChatRequest, current_user: User = Depends(get_current_user)):
     try:
         session_id = request.session_id or "default_session"
-        resp = chat_with_agent(request.message, current_user.username, session_id)
+        resp = chat_with_agent(
+            request.message,
+            current_user.username,
+            session_id,
+            session_context={
+                "active_essay_id": request.active_essay_id,
+                "active_essay_title": request.active_essay_title,
+                "analysis_mode": request.analysis_mode,
+            },
+        )
         if isinstance(resp, dict):
             return ChatResponse(**resp)
         return ChatResponse(response=resp)
@@ -366,7 +470,16 @@ async def chat_stream_endpoint(request: ChatRequest, current_user: User = Depend
     async def event_generator():
         try:
             session_id = request.session_id or "default_session"
-            async for chunk in chat_with_agent_stream(request.message, current_user.username, session_id):
+            async for chunk in chat_with_agent_stream(
+                request.message,
+                current_user.username,
+                session_id,
+                session_context={
+                    "active_essay_id": request.active_essay_id,
+                    "active_essay_title": request.active_essay_title,
+                    "analysis_mode": request.analysis_mode,
+                },
+            ):
                 yield chunk
         except Exception as e:
             error_data = {"type": "error", "content": format_model_error_message(e, BASE_URL)}
@@ -387,24 +500,42 @@ async def chat_stream_endpoint(request: ChatRequest, current_user: User = Depend
 async def list_essays(current_user: User = Depends(get_current_user)):
     """获取当前用户的私密随笔列表。"""
     try:
-        milvus_manager.init_collection()
-        results = milvus_manager.query_all(
-            filter_expr=_private_essay_filter(filename=None, owner_id=current_user.username),
-            output_fields=["filename", "file_type"],
-        )
-
         file_stats: dict[str, dict[str, Any]] = {}
-        for item in results:
-            filename = item.get("filename", "")
-            file_type = item.get("file_type", "")
-            if filename not in file_stats:
-                file_stats[filename] = {
-                    "filename": filename,
-                    "file_type": file_type,
-                    "chunk_count": 0,
-                }
-            file_stats[filename]["chunk_count"] += 1
-
+        for item in essay_store.list_by_owner(current_user.username):
+            file_stats[item.get("filename", "")] = {
+                "essay_id": item.get("essay_id"),
+                "title": item.get("title"),
+                "filename": item.get("filename", ""),
+                "file_type": item.get("file_type", ""),
+                "language": item.get("language"),
+                "chunk_count": int(item.get("chunk_count") or 0),
+                "uploaded_at": item.get("updated_at"),
+            }
+        if legacy_essay_milvus_manager:
+            try:
+                legacy_essay_milvus_manager.init_collection()
+                legacy_rows = legacy_essay_milvus_manager.query_all(
+                    filter_expr=_private_essay_filter(filename=None, owner_id=current_user.username),
+                    output_fields=["filename", "file_type"],
+                )
+                for row in legacy_rows:
+                    filename = row.get("filename", "")
+                    if not filename:
+                        continue
+                    existing = file_stats.get(filename)
+                    if not existing:
+                        file_stats[filename] = {
+                            "essay_id": None,
+                            "title": Path(filename).stem,
+                            "filename": filename,
+                            "file_type": row.get("file_type", ""),
+                            "language": None,
+                            "chunk_count": 0,
+                            "uploaded_at": None,
+                        }
+                    file_stats[filename]["chunk_count"] = int(file_stats[filename].get("chunk_count") or 0) + 1
+            except Exception:
+                pass
         essays = [EssayInfo(**stats) for _, stats in sorted(file_stats.items(), key=lambda pair: pair[0].lower())]
         return EssayListResponse(essays=essays)
     except Exception as e:
@@ -474,11 +605,11 @@ async def upload_essay_stream(
                     async def worker():
                         try:
                             result = await asyncio.to_thread(
-                                _process_uploaded_document_sync,
+                                _process_uploaded_essay_sync,
                                 filename,
                                 file_path,
+                                current_user.username,
                                 progress_callback,
-                                metadata,
                             )
                             await output_queue.put(
                                 {
@@ -569,9 +700,9 @@ async def upload_essay_stream(
 async def list_documents(_: User = Depends(require_admin)):
     """获取已上传的文档列表（管理员）"""
     try:
-        milvus_manager.init_collection()
+        knowledge_milvus_manager.init_collection()
 
-        results = milvus_manager.query_all(
+        results = knowledge_milvus_manager.query_all(
             filter_expr=_public_document_filter(),
             output_fields=["filename", "file_type"],
         )
@@ -598,18 +729,40 @@ async def list_documents(_: User = Depends(require_admin)):
 async def delete_essay(filename: str, current_user: User = Depends(get_current_user)):
     """删除当前用户私密随笔的向量和父级分块。"""
     try:
-        milvus_manager.init_collection()
+        essay_milvus_manager.init_collection()
         filter_expr = _private_essay_filter(filename=filename, owner_id=current_user.username)
-        _remove_bm25_stats(filter_expr)
-        result = milvus_manager.delete(filter_expr)
-        _delete_parent_chunks_for_scope(
-            filename,
-            {
-                "visibility": "private",
-                "owner_id": current_user.username,
-                "document_domain": "essay",
-            },
-        )
+        try:
+            _remove_bm25_stats(essay_milvus_manager, filter_expr)
+        except Exception:
+            pass
+        result = essay_milvus_manager.delete(filter_expr)
+        if legacy_essay_milvus_manager:
+            try:
+                _remove_bm25_stats(legacy_essay_milvus_manager, filter_expr)
+            except Exception:
+                pass
+            try:
+                legacy_essay_milvus_manager.delete(filter_expr)
+            except Exception:
+                pass
+            try:
+                _delete_parent_chunks_for_scope(
+                    filename,
+                    {
+                        "visibility": "private",
+                        "owner_id": current_user.username,
+                        "document_domain": "essay",
+                    },
+                )
+            except Exception:
+                pass
+        essay_store.delete(current_user.username, filename)
+        file_path = _owner_upload_dir(current_user.username) / filename
+        if file_path.exists():
+            try:
+                file_path.unlink()
+            except OSError:
+                pass
 
         return EssayDeleteResponse(
             filename=filename,
@@ -785,11 +938,11 @@ async def upload_document_stream(
 async def delete_document(filename: str, _: User = Depends(require_admin)):
     """删除文档在 Milvus 中的向量（保留本地文件，管理员）"""
     try:
-        milvus_manager.init_collection()
+        knowledge_milvus_manager.init_collection()
 
         delete_expr = _public_document_filter(filename)
-        _remove_bm25_stats(delete_expr)
-        result = milvus_manager.delete(delete_expr)
+        _remove_bm25_stats(knowledge_milvus_manager, delete_expr)
+        result = knowledge_milvus_manager.delete(delete_expr)
         _delete_parent_chunks_for_scope(filename, _build_scope_metadata("public", "", "knowledge_base"))
 
         return DocumentDeleteResponse(

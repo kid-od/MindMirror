@@ -1076,6 +1076,7 @@ html[data-theme="dark"] .topbar-preferences .preference-toggle {
 
 .essay-card.featured {
     grid-column: span 2;
+    background: var(--surface-container-lowest);
 }
 
 .essay-meta {
@@ -2645,5 +2646,910 @@ html[data-theme="dark"] .session-delete {
 
     .send-reflection {
         width: 100%;
+    }
+}
+
+/* Clinical Void override: keep layout skeleton, replace the visual system. */
+:root {
+    --primary: #000000;
+    --primary-dim: #1b1b1b;
+    --primary-container: #3b3b3b;
+    --secondary-container: #f0f0f0;
+    --tertiary: #474747;
+    --tertiary-dim: #2e2e2e;
+    --tertiary-fixed: #d9d9d9;
+    --surface: #f9f9f9;
+    --surface-container-lowest: #ffffff;
+    --surface-container-low: #f3f3f3;
+    --surface-container: #efefef;
+    --surface-container-high: #e8e8e8;
+    --surface-container-highest: #e2e2e2;
+    --on-primary: #e2e2e2;
+    --on-surface: #1b1b1b;
+    --on-surface-variant: #474747;
+    --outline-variant: #c6c6c6;
+    --ghost-border: rgba(198, 198, 198, 0.2);
+    --ambient-shadow: 0 24px 60px rgba(0, 0, 0, 0.045);
+    --soft-shadow: 0 12px 30px rgba(0, 0, 0, 0.03);
+    --calm-motion: 420ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html {
+    color-scheme: light;
+}
+
+body {
+    color: var(--on-surface);
+    font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background:
+        radial-gradient(circle at top right, rgba(0, 0, 0, 0.035), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(0, 0, 0, 0.03), transparent 24%),
+        linear-gradient(180deg, #fcfcfc 0%, var(--surface) 46%, #f2f2f2 100%);
+}
+
+body::before {
+    display: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+button,
+input,
+select,
+textarea {
+    font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.auth-glow {
+    display: none;
+}
+
+.auth-preferences,
+.topbar-preferences {
+    gap: 12px;
+}
+
+.preference-toggle {
+    min-height: 40px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(249, 249, 249, 0.8);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.04);
+    backdrop-filter: blur(20px);
+    color: var(--on-surface);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.preference-toggle:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.94);
+}
+
+.auth-panel {
+    width: min(680px, 100%);
+    padding: 52px;
+    border-radius: 14px;
+    background: rgba(249, 249, 249, 0.9);
+    box-shadow: var(--ambient-shadow);
+    backdrop-filter: blur(20px);
+}
+
+.auth-avatar,
+.psyche-avatar,
+.psyche-profile-icon,
+.card-icon,
+.curator-label .app-icon-auto-awesome {
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+}
+
+.auth-kicker,
+.psyche-brand h1,
+.curator-label,
+.quote-icon {
+    color: var(--primary);
+}
+
+.auth-brand h1,
+.psyche-brand h1,
+.page-hero h2,
+.quote-card h2 {
+    font-weight: 700;
+}
+
+.auth-copy,
+.page-hero p,
+.quote-card p,
+.empty-copy,
+.thinking-text,
+.citation-card p,
+.settings-card p,
+.document-meta span,
+.reflection-session span,
+.activity-entry span,
+.analysis-options span,
+.deep-chat-header p,
+.knowledge-card p,
+.essay-card p,
+.psyche-brand p,
+.psyche-profile span,
+.coverage-meta {
+    color: var(--on-surface-variant);
+}
+
+.auth-fields input,
+.auth-fields select,
+.psyche-search,
+.deep-input-area textarea {
+    background: var(--surface-container-low);
+    color: var(--on-surface);
+}
+
+.auth-fields input,
+.auth-fields select {
+    border-radius: 8px;
+}
+
+.auth-fields input:focus,
+.auth-fields select:focus,
+.psyche-search:focus-within,
+.deep-input-area textarea:focus {
+    background: var(--surface-container-high);
+    box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.stitch-primary,
+.send-reflection {
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-container));
+    color: var(--on-primary);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+}
+
+.ghost-auth,
+.psyche-logout,
+.ghost-action,
+.activity-head button,
+.essay-card-footer button {
+    border-radius: 8px;
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+}
+
+.ghost-auth:hover,
+.psyche-logout:hover,
+.ghost-action:hover,
+.activity-head button:hover,
+.essay-card-footer button:hover {
+    background: var(--surface-container-lowest);
+    box-shadow: var(--soft-shadow);
+}
+
+.reflection-chip,
+.status-pill,
+.insight-chip,
+.essay-meta span,
+.document-meta span,
+.kb-active,
+.reflection-session {
+    border-radius: 999px;
+}
+
+.psyche-shell {
+    background: transparent;
+}
+
+.psyche-sidebar {
+    flex: 0 0 288px;
+    padding: 28px 22px;
+    border-radius: 0 16px 16px 0;
+    background: rgba(249, 249, 249, 0.82);
+    box-shadow: 18px 0 36px rgba(0, 0, 0, 0.035);
+    backdrop-filter: blur(20px);
+}
+
+.psyche-nav {
+    gap: 10px;
+}
+
+.psyche-nav-item {
+    padding: 14px 16px;
+    border-radius: 10px;
+    color: var(--on-surface-variant);
+    font-weight: 600;
+}
+
+.psyche-nav-item:hover {
+    transform: translateX(0);
+    background: var(--surface-container-low);
+    color: var(--on-surface);
+}
+
+.psyche-nav-item.active {
+    background: linear-gradient(135deg, var(--primary), var(--primary-container));
+    color: var(--on-primary);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+}
+
+.stitch-profile-card {
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--surface-container-low);
+    box-shadow: inset 0 0 0 1px var(--ghost-border);
+}
+
+.psyche-profile {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.psyche-main {
+    background: rgba(249, 249, 249, 0.58);
+}
+
+.psyche-topbar {
+    position: sticky;
+    top: 0;
+    padding: 24px 40px;
+    background: rgba(249, 249, 249, 0.8);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.025);
+    backdrop-filter: blur(20px);
+}
+
+.psyche-search {
+    min-height: 50px;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px var(--ghost-border);
+}
+
+.psyche-search input {
+    background: transparent;
+    color: var(--on-surface);
+}
+
+.psyche-top-actions {
+    gap: 14px;
+    color: var(--on-surface-variant);
+}
+
+.psyche-canvas,
+.psyche-chat-layout {
+    padding: 48px 56px 72px;
+}
+
+.quote-card,
+.bento-card,
+.upload-dropzone,
+.essay-card,
+.deep-chat,
+.reflection-list,
+.curator-card,
+.knowledge-card,
+.activity-card,
+.restricted-card,
+.settings-card,
+.stitch-upload-status,
+.curator-welcome,
+.empty-garden {
+    background: var(--surface-container-lowest);
+    box-shadow: var(--ambient-shadow);
+}
+
+.quote-card,
+.upload-dropzone,
+.essay-card,
+.deep-chat,
+.curator-welcome,
+.restricted-card,
+.empty-garden {
+    border-radius: 14px;
+}
+
+.bento-card,
+.knowledge-card,
+.activity-card,
+.settings-card,
+.reflection-list,
+.curator-card,
+.stitch-upload-status {
+    border-radius: 12px;
+}
+
+.quote-card {
+    margin-bottom: 40px;
+    padding: 64px 56px;
+    text-align: left;
+    background:
+        radial-gradient(circle at top right, rgba(0, 0, 0, 0.04), transparent 22%),
+        linear-gradient(180deg, var(--surface-container-lowest), #f6f6f6);
+}
+
+.quote-card::before,
+.quote-card::after {
+    background: rgba(0, 0, 0, 0.06);
+    opacity: 0.35;
+}
+
+.quote-card h2 {
+    max-width: 980px;
+    font-size: clamp(2.1rem, 4vw, 3.7rem);
+    line-height: 1.08;
+}
+
+.quote-icon {
+    margin: 0 0 28px;
+    color: rgba(0, 0, 0, 0.12);
+}
+
+.bento-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.themes-card,
+.coverage-card {
+    grid-column: span 2;
+}
+
+.bento-card {
+    min-height: 252px;
+    padding: 28px;
+}
+
+.deep-card {
+    background: linear-gradient(135deg, var(--primary), var(--primary-container));
+    color: var(--on-primary);
+}
+
+.deep-card p,
+.deep-card button {
+    color: rgba(226, 226, 226, 0.92);
+}
+
+.deep-card button {
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.activity-grid,
+.settings-grid {
+    gap: 24px;
+}
+
+.activity-card,
+.restricted-card,
+.settings-card {
+    padding: 28px;
+}
+
+.activity-entry {
+    padding: 18px 18px;
+    border-bottom: 0;
+    border-radius: 10px;
+    background: transparent;
+}
+
+.activity-entry:hover {
+    background: var(--surface-container-low);
+}
+
+.page-hero {
+    align-items: end;
+    margin-bottom: 32px;
+}
+
+.page-hero h2 {
+    font-size: clamp(3rem, 5vw, 4.6rem);
+    line-height: 0.94;
+}
+
+.upload-dropzone {
+    min-height: 300px;
+    gap: 14px;
+    border: 0;
+    box-shadow: var(--ambient-shadow), inset 0 0 0 1px var(--ghost-border);
+    background:
+        linear-gradient(180deg, var(--surface-container-lowest), var(--surface-container-low));
+}
+
+.stitch-upload-status {
+    background: var(--surface-container-low);
+}
+
+.document-stack,
+.essay-grid {
+    gap: 20px;
+}
+
+.essay-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.essay-card.featured {
+    grid-column: span 2;
+}
+
+.essay-card {
+    min-height: 300px;
+    padding: 32px;
+}
+
+.essay-card-footer,
+.document-actions {
+    gap: 12px;
+}
+
+.stitch-chat-layout,
+.psyche-chat-layout {
+    display: grid;
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    align-items: stretch;
+    gap: 24px;
+    max-width: 1640px;
+    margin: 0 auto;
+}
+
+.stitch-chat-layout {
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    align-items: stretch;
+}
+
+.reflection-list {
+    gap: 16px;
+    padding: 20px;
+    overflow: hidden;
+    background:
+        linear-gradient(180deg, rgba(249, 249, 249, 0.92), rgba(243, 243, 243, 0.96));
+}
+
+.reflection-chip {
+    min-height: 38px;
+    width: 100%;
+    justify-content: flex-start;
+    padding: 8px 14px;
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+    box-shadow: none;
+}
+
+.reflection-session-list {
+    align-content: start;
+    grid-auto-rows: max-content;
+}
+
+.reflection-session {
+    gap: 6px;
+    padding: 16px 46px 16px 16px;
+    border: 0;
+    background: var(--surface-container-low);
+    color: var(--on-surface);
+    box-shadow: none;
+}
+
+.reflection-session:hover {
+    background: var(--surface-container-high);
+}
+
+.reflection-session.active {
+    background: var(--surface-container-lowest);
+    color: var(--on-surface);
+    box-shadow: var(--soft-shadow);
+}
+
+.reflection-session.active span {
+    color: var(--on-surface-variant);
+}
+
+.session-delete {
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--on-surface-variant);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.session-delete:hover {
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+}
+
+.deep-chat {
+    height: 100%;
+    min-height: 0;
+    width: 100%;
+    border: 0;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(246, 246, 246, 0.98)),
+        radial-gradient(circle at top right, rgba(0, 0, 0, 0.03), transparent 24%);
+    box-shadow: 0 28px 72px rgba(0, 0, 0, 0.055);
+}
+
+.deep-chat-header,
+.deep-input-area {
+    padding: 24px 28px;
+}
+
+.deep-chat-header {
+    gap: 16px;
+    border-bottom: 0;
+    background: linear-gradient(180deg, rgba(243, 243, 243, 0.96), rgba(249, 249, 249, 0.3));
+}
+
+.kb-active,
+.status-pill,
+.insight-chip,
+.document-meta span,
+.essay-meta span {
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+}
+
+.deep-chat-messages {
+    gap: 20px;
+    padding: 26px 32px 28px;
+    background:
+        radial-gradient(circle at top right, rgba(0, 0, 0, 0.03), transparent 24%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(249, 249, 249, 0.92));
+    scrollbar-gutter: stable;
+}
+
+.user-bubble {
+    max-width: min(760px, 78%);
+    border: 0;
+    border-radius: 18px 18px 4px 18px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-container));
+    color: var(--on-primary);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.14);
+}
+
+.curator-card {
+    max-width: min(1180px, 100%);
+    border: 1px solid var(--ghost-border);
+    border-radius: 12px 12px 12px 4px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.045);
+    backdrop-filter: blur(10px);
+}
+
+.citation-card {
+    gap: 14px;
+    padding: 18px;
+    border-radius: 10px;
+    background: var(--surface-container-low);
+}
+
+.analysis-chip-row button {
+    border-radius: 999px;
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+}
+
+.deep-input-area {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 56px;
+    flex: 0 0 auto;
+    gap: 14px;
+    align-items: center;
+    border-top: 0;
+    background: linear-gradient(180deg, rgba(243, 243, 243, 0.7), rgba(249, 249, 249, 0.98));
+    box-shadow: 0 -14px 28px rgba(0, 0, 0, 0.03);
+}
+
+.deep-input-area::before {
+    display: none;
+}
+
+.deep-input-area textarea {
+    min-height: 66px;
+    max-height: 160px;
+    padding: 18px 22px;
+    border-radius: 10px;
+    background: var(--surface-container-low);
+    box-shadow: inset 0 0 0 1px var(--ghost-border);
+    line-height: 1.7;
+}
+
+.deep-input-area small {
+    grid-column: 1 / -1;
+    margin-top: -2px;
+    color: var(--on-surface-variant);
+    text-align: left;
+}
+
+.send-reflection {
+    width: 56px;
+    min-height: 56px;
+    padding: 0;
+}
+
+.settings-card h3,
+.knowledge-card h3,
+.essay-card h3,
+.card-title h3,
+.activity-head h3,
+.reflection-list h2,
+.deep-chat-header h2 {
+    letter-spacing: -0.02em;
+}
+
+@media (hover: none) {
+    .session-delete {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 1180px) {
+    .stitch-chat-layout,
+    .psyche-chat-layout,
+    .bento-grid,
+    .essay-grid,
+    .activity-grid,
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .themes-card,
+    .coverage-card,
+    .essay-card.featured {
+        grid-column: span 1;
+    }
+}
+
+@media (max-width: 980px) {
+    .psyche-shell {
+        display: block;
+        overflow: auto;
+    }
+
+    .psyche-sidebar {
+        min-height: auto;
+        width: 100%;
+        border-radius: 0 0 12px 12px;
+    }
+
+    .psyche-topbar,
+    .psyche-canvas,
+    .stitch-chat-layout,
+    .psyche-chat-layout {
+        padding-left: 22px;
+        padding-right: 22px;
+    }
+
+    .stitch-chat-layout,
+    .psyche-chat-layout {
+        grid-template-columns: 1fr;
+        overflow: visible;
+    }
+
+    .psyche-topbar,
+    .page-hero,
+    .deep-chat-header,
+    .essay-card-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (max-width: 720px) {
+    .auth-panel {
+        padding: 32px 24px;
+    }
+
+    .psyche-topbar,
+    .psyche-canvas,
+    .stitch-chat-layout,
+    .psyche-chat-layout {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .reflection-list,
+    .deep-chat,
+    .quote-card,
+    .upload-dropzone,
+    .essay-card,
+    .activity-card,
+    .knowledge-card,
+    .settings-card,
+    .restricted-card,
+    .curator-card {
+        border-radius: 10px;
+    }
+
+    .deep-input-area {
+        grid-template-columns: 1fr;
+    }
+
+    .send-reflection {
+        width: 100%;
+    }
+}
+
+:root {
+    --chat-shell-stable-height: clamp(40rem, 76vh, 58rem);
+    --essay-ink: #111111;
+    --essay-muted: rgba(17, 17, 17, 0.64);
+    --essay-line: rgba(17, 17, 17, 0.12);
+}
+
+.psyche-chat-layout,
+.stitch-chat-layout {
+    align-items: stretch;
+}
+
+.reflection-list,
+.deep-chat {
+    min-height: var(--chat-shell-stable-height);
+}
+
+.deep-chat {
+    display: flex;
+    flex-direction: column;
+}
+
+.deep-chat-messages {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 26rem;
+}
+
+.curator-welcome {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(1.5rem, 4vw, 3rem);
+}
+
+.curator-welcome h3,
+.curator-welcome p {
+    max-width: 38rem;
+}
+
+.reflection-session-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.reflection-session-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.reflection-session {
+    display: flex;
+    min-width: 0;
+    min-height: 54px;
+    align-items: center;
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(17, 17, 17, 0.08);
+    border-radius: 1rem;
+    background: #ffffff;
+    box-shadow: none;
+}
+
+.reflection-session strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.reflection-session.active {
+    background: #111111;
+    color: #ffffff;
+    box-shadow: none;
+}
+
+.reflection-session.active span {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.session-delete {
+    position: static;
+    transform: none;
+    align-self: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(17, 17, 17, 0.12);
+    border-radius: 14px;
+    background: #ffffff;
+    color: #111111;
+    box-shadow: none;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.reflection-session-row:hover .session-delete,
+.reflection-session-row.active .session-delete,
+.session-delete:focus-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.session-delete:hover {
+    background: #111111;
+    color: #ffffff;
+}
+
+.essays-view .stitch-upload-status,
+.essays-view .empty-garden,
+.essay-card,
+.essay-card.featured {
+    background: #ffffff;
+    border: 1px solid var(--essay-line);
+    box-shadow: 0 18px 40px rgba(17, 17, 17, 0.05);
+}
+
+.essay-card h3,
+.essay-card p,
+.essay-meta,
+.essay-card-footer {
+    color: var(--essay-ink);
+}
+
+.essay-card p,
+.essay-meta,
+.essay-card-footer,
+.essays-view .empty-garden p,
+.essays-view .stitch-upload-status p,
+.essays-view .stitch-upload-status pre {
+    color: var(--essay-muted);
+}
+
+.essay-meta span,
+.essay-card .insight-chip {
+    background: #111111;
+    color: #ffffff;
+}
+
+.essay-card-actions .ghost-action {
+    background: transparent;
+    color: var(--essay-ink);
+    border: 1px solid var(--essay-line);
+}
+
+.essay-card-actions button:not(.ghost-action),
+.essays-view .stitch-primary {
+    border: 1px solid #111111;
+    background: #111111;
+    color: #ffffff;
+    box-shadow: none;
+}
+
+.essay-card-actions .ghost-action:hover,
+.essay-card-actions button:not(.ghost-action):hover,
+.essays-view .stitch-primary:hover {
+    background: #111111;
+    color: #ffffff;
+}
+
+@media (hover: none) {
+    .session-delete {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+}
+
+@media (max-width: 980px) {
+    .reflection-list,
+    .deep-chat {
+        min-height: auto;
+    }
+
+    .deep-chat {
+        min-height: 34rem;
     }
 }

@@ -1,5 +1,6 @@
 """文档加载和分片服务"""
 import os
+import re
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Dict, List
@@ -14,6 +15,9 @@ except ModuleNotFoundError:
 
 class DocumentLoader:
     """文档加载和分片服务"""
+    _MILVUS_TEXT_MAX_BYTES = 2000
+    _ESSAY_TARGET_BYTES = 1800
+    _ESSAY_BREAKPOINTS = {"\n", "。", "！", "？", "；", "，", "、", " ", ".", "!", "?", ";", ","}
 
     def __init__(self, chunk_size: int = 500, chunk_overlap: int = 50):
         # 保留原有参数以兼容外部调用；默认启用三层滑动窗口分块。
@@ -42,10 +46,29 @@ class DocumentLoader:
             add_start_index=True,
             separators=["\n\n", "\n", "。", "！", "？", "，", "、", " ", ""],
         )
+        self._essay_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=max(1400, chunk_size * 2),
+            chunk_overlap=max(160, chunk_overlap * 2),
+            add_start_index=True,
+            separators=["\n\n", "\n", "。", "！", "？", "；", "，", "、", " ", ""],
+        )
 
     @staticmethod
-    def _build_chunk_id(filename: str, page_number: int, level: int, index: int) -> str:
-        return f"{filename}::p{page_number}::l{level}::{index}"
+    def _build_chunk_scope_prefix(base_doc: Dict) -> str:
+        visibility = (base_doc.get("visibility") or "public").strip().lower()
+        owner_id = (base_doc.get("owner_id") or "").strip()
+        document_domain = (base_doc.get("document_domain") or "knowledge_base").strip().lower()
+        if visibility == "public" and not owner_id and document_domain == "knowledge_base":
+            return ""
+
+        safe_visibility = re.sub(r"[^A-Za-z0-9._-]+", "_", visibility) or "public"
+        safe_owner = re.sub(r"[^A-Za-z0-9._-]+", "_", owner_id) or "anonymous"
+        safe_domain = re.sub(r"[^A-Za-z0-9._-]+", "_", document_domain) or "default"
+        return f"{safe_visibility}::{safe_owner}::{safe_domain}::"
+
+    @staticmethod
+    def _build_chunk_id(filename: str, page_number: int, level: int, index: int, scope_prefix: str = "") -> str:
+        return f"{scope_prefix}{filename}::p{page_number}::l{level}::{index}"
 
     def _split_page_to_three_levels(
         self,
@@ -60,6 +83,7 @@ class DocumentLoader:
         root_chunks: List[Dict] = []
         page_number = int(base_doc.get("page_number", 0))
         filename = base_doc["filename"]
+        scope_prefix = self._build_chunk_scope_prefix(base_doc)
 
         level_1_docs = self._splitter_level_1.create_documents([text], [base_doc])
         level_1_counter = 0
@@ -70,7 +94,7 @@ class DocumentLoader:
             level_1_text = sanitize_text(level_1_doc.page_content).strip()
             if not level_1_text:
                 continue
-            level_1_id = self._build_chunk_id(filename, page_number, 1, level_1_counter)
+            level_1_id = self._build_chunk_id(filename, page_number, 1, level_1_counter, scope_prefix=scope_prefix)
             level_1_counter += 1
 
             level_1_chunk = {
@@ -90,7 +114,7 @@ class DocumentLoader:
                 level_2_text = sanitize_text(level_2_doc.page_content).strip()
                 if not level_2_text:
                     continue
-                level_2_id = self._build_chunk_id(filename, page_number, 2, level_2_counter)
+                level_2_id = self._build_chunk_id(filename, page_number, 2, level_2_counter, scope_prefix=scope_prefix)
                 level_2_counter += 1
 
                 level_2_chunk = {
@@ -110,7 +134,7 @@ class DocumentLoader:
                     level_3_text = sanitize_text(level_3_doc.page_content).strip()
                     if not level_3_text:
                         continue
-                    level_3_id = self._build_chunk_id(filename, page_number, 3, level_3_counter)
+                    level_3_id = self._build_chunk_id(filename, page_number, 3, level_3_counter, scope_prefix=scope_prefix)
                     level_3_counter += 1
                     root_chunks.append({
                         **base_doc,
@@ -125,6 +149,153 @@ class DocumentLoader:
 
         return root_chunks
 
+    @classmethod
+    def _utf8_len(cls, text: str) -> int:
+        return len((text or "").encode("utf-8"))
+
+    @classmethod
+    def _split_text_by_max_bytes(cls, text: str, max_bytes: int) -> List[str]:
+        cleaned = sanitize_text(text).strip()
+        if not cleaned:
+            return []
+        if cls._utf8_len(cleaned) <= max_bytes:
+            return [cleaned]
+
+        chunks: List[str] = []
+        start = 0
+        length = len(cleaned)
+        while start < length:
+            byte_count = 0
+            idx = start
+            last_break = -1
+            while idx < length:
+                char = cleaned[idx]
+                char_bytes = len(char.encode("utf-8"))
+                if byte_count + char_bytes > max_bytes:
+                    break
+                byte_count += char_bytes
+                if char in cls._ESSAY_BREAKPOINTS:
+                    last_break = idx + 1
+                idx += 1
+
+            if idx >= length:
+                piece = cleaned[start:length].strip()
+                if piece:
+                    chunks.append(piece)
+                break
+
+            split_at = last_break if last_break > start else idx
+            piece = cleaned[start:split_at].strip()
+            if not piece:
+                split_at = min(length, start + 1)
+                piece = cleaned[start:split_at].strip()
+            if piece:
+                chunks.append(piece)
+            start = split_at
+
+        return [chunk for chunk in chunks if chunk]
+
+    @classmethod
+    def _enforce_text_byte_limit(cls, chunks: List[str], max_bytes: int | None = None) -> List[str]:
+        limit = max_bytes or cls._ESSAY_TARGET_BYTES
+        enforced: List[str] = []
+        for chunk in chunks:
+            enforced.extend(cls._split_text_by_max_bytes(chunk, max_bytes=limit))
+        return [item for item in enforced if item and cls._utf8_len(item) <= cls._MILVUS_TEXT_MAX_BYTES]
+
+    @staticmethod
+    def _resolve_doc_type(filename: str):
+        file_lower = filename.lower()
+        if file_lower.endswith(".pdf"):
+            return "PDF", PyPDFLoader
+        if file_lower.endswith((".docx", ".doc")):
+            return "Word", Docx2txtLoader
+        if file_lower.endswith((".xlsx", ".xls")):
+            return "Excel", UnstructuredExcelLoader
+        if file_lower.endswith((".md", ".markdown")):
+            return "Markdown", None
+        raise ValueError(f"不支持的文件类型: {filename}")
+
+    def _load_raw_documents(self, file_path: str, filename: str):
+        doc_type, loader_cls = self._resolve_doc_type(filename)
+        if doc_type == "Markdown":
+            text = Path(file_path).read_text(encoding="utf-8-sig", errors="replace")
+            return doc_type, [SimpleNamespace(page_content=text, metadata={"page": 0})]
+        loader = loader_cls(file_path)
+        return doc_type, loader.load()
+
+    def load_document_content(self, file_path: str, filename: str) -> dict:
+        try:
+            doc_type, raw_docs = self._load_raw_documents(file_path, filename)
+            parts = []
+            for doc in raw_docs:
+                cleaned = sanitize_text(doc.page_content).strip()
+                if cleaned:
+                    parts.append(cleaned)
+            content = "\n\n".join(parts).strip()
+            return {
+                "content": content,
+                "file_type": doc_type,
+            }
+        except Exception as e:
+            raise Exception(f"处理文档失败: {str(e)}")
+
+    def load_essay_document(
+        self,
+        file_path: str,
+        filename: str,
+        metadata: dict | None = None,
+        full_text_threshold: int = 2800,
+    ) -> dict:
+        metadata = metadata or {}
+        extracted = self.load_document_content(file_path, filename)
+        content = sanitize_text(extracted.get("content", "")).strip()
+        file_type = extracted.get("file_type", "")
+        if not content:
+            return {"content": "", "file_type": file_type, "chunks": []}
+
+        base_doc = {
+            "filename": filename,
+            "file_path": file_path,
+            "file_type": file_type,
+            "page_number": 0,
+            "visibility": metadata.get("visibility", "private"),
+            "owner_id": metadata.get("owner_id", ""),
+            "document_domain": metadata.get("document_domain", "essay"),
+        }
+        scope_prefix = self._build_chunk_scope_prefix(base_doc)
+
+        raw_segments: List[str] = []
+        if len(content) <= full_text_threshold:
+            raw_segments = [content]
+        else:
+            for doc in self._essay_splitter.create_documents([content], [base_doc]):
+                text = sanitize_text(doc.page_content).strip()
+                if text:
+                    raw_segments.append(text)
+        safe_segments = self._enforce_text_byte_limit(raw_segments)
+
+        chunks = []
+        for idx, text in enumerate(safe_segments):
+            chunk_id = self._build_chunk_id(filename, 0, 1, idx, scope_prefix=scope_prefix)
+            chunks.append(
+                {
+                    **base_doc,
+                    "text": text,
+                    "chunk_id": chunk_id,
+                    "parent_chunk_id": "",
+                    "root_chunk_id": chunk_id,
+                    "chunk_level": 1,
+                    "chunk_idx": idx,
+                }
+            )
+
+        return {
+            "content": content,
+            "file_type": file_type,
+            "chunks": chunks,
+        }
+
     def load_document(self, file_path: str, filename: str, metadata: dict | None = None) -> list[dict]:
         """
         加载单个文档并分片
@@ -134,29 +305,8 @@ class DocumentLoader:
         :return: 分片后的文档列表
         """
         metadata = metadata or {}
-        file_lower = filename.lower()
-
-        if file_lower.endswith(".pdf"):
-            doc_type = "PDF"
-            loader = PyPDFLoader(file_path)
-        elif file_lower.endswith((".docx", ".doc")):
-            doc_type = "Word"
-            loader = Docx2txtLoader(file_path)
-        elif file_lower.endswith((".xlsx", ".xls")):
-            doc_type = "Excel"
-            loader = UnstructuredExcelLoader(file_path)
-        elif file_lower.endswith((".md", ".markdown")):
-            doc_type = "Markdown"
-            loader = None
-        else:
-            raise ValueError(f"不支持的文件类型: {filename}")
-
         try:
-            if doc_type == "Markdown":
-                text = Path(file_path).read_text(encoding="utf-8-sig", errors="replace")
-                raw_docs = [SimpleNamespace(page_content=text, metadata={"page": 0})]
-            else:
-                raw_docs = loader.load()
+            doc_type, raw_docs = self._load_raw_documents(file_path, filename)
             documents = []
             page_global_chunk_idx = 0
             for doc in raw_docs:

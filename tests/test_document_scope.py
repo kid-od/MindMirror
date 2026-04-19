@@ -126,6 +126,35 @@ class DocumentScopeMetadataTest(unittest.TestCase):
         self.assertTrue(all(doc["owner_id"] == "alice" for doc in docs))
         self.assertTrue(all(doc["document_domain"] == "essay" for doc in docs))
 
+    def test_private_chunk_ids_are_scoped_by_owner_to_avoid_collisions(self):
+        DocumentLoader = _load_document_loader_module().DocumentLoader
+
+        path = Path("/tmp/shared_private_scope.md")
+        path.write_text("同名随笔也应该拥有不同的分块标识。", encoding="utf-8")
+
+        loader = DocumentLoader(chunk_size=120, chunk_overlap=10)
+        alice_docs = loader.load_document(
+            str(path),
+            "shared_private_scope.md",
+            metadata={
+                "visibility": "private",
+                "owner_id": "alice",
+                "document_domain": "essay",
+            },
+        )
+        bob_docs = loader.load_document(
+            str(path),
+            "shared_private_scope.md",
+            metadata={
+                "visibility": "private",
+                "owner_id": "bob",
+                "document_domain": "essay",
+            },
+        )
+
+        self.assertTrue({doc["chunk_id"] for doc in alice_docs}.isdisjoint({doc["chunk_id"] for doc in bob_docs}))
+        self.assertTrue({doc["root_chunk_id"] for doc in alice_docs}.isdisjoint({doc["root_chunk_id"] for doc in bob_docs}))
+
     def test_milvus_writer_includes_scope_fields(self):
         MilvusWriter = _load_milvus_writer_module().MilvusWriter
 
@@ -170,6 +199,27 @@ class DocumentScopeMetadataTest(unittest.TestCase):
         self.assertEqual(row["visibility"], "private")
         self.assertEqual(row["owner_id"], "alice")
         self.assertEqual(row["document_domain"], "essay")
+
+    def test_long_essay_chunks_stay_within_milvus_varchar_limit(self):
+        DocumentLoader = _load_document_loader_module().DocumentLoader
+
+        path = Path("/tmp/long_single_paragraph_essay.md")
+        path.write_text("我在想" * 1200, encoding="utf-8")
+
+        loader = DocumentLoader(chunk_size=120, chunk_overlap=10)
+        payload = loader.load_essay_document(
+            str(path),
+            "long_single_paragraph_essay.md",
+            metadata={
+                "visibility": "private",
+                "owner_id": "alice",
+                "document_domain": "essay",
+            },
+        )
+
+        chunks = payload["chunks"]
+        self.assertGreater(len(chunks), 1)
+        self.assertTrue(all(len(chunk["text"].encode("utf-8")) <= 2000 for chunk in chunks))
 
 
 class ScopePersistenceTest(unittest.TestCase):
@@ -338,6 +388,90 @@ class ScopedRetrievalExecutionTest(unittest.TestCase):
             'chunk_level == 3 and ((visibility == "public" and document_domain == "knowledge_base") or '
             '(visibility == "private" and owner_id == "alice" and document_domain == "essay"))',
         )
+
+    def test_auto_merge_skips_parent_docs_from_other_scope(self):
+        embedding_module = types.ModuleType("embedding")
+
+        class _EmbeddingService:
+            def get_embeddings(self, texts):
+                return [[0.1, 0.2] for _ in texts]
+
+            def get_sparse_embedding(self, text):
+                return {1: 0.5}
+
+        embedding_module.embedding_service = _EmbeddingService()
+
+        milvus_client_module = types.ModuleType("milvus_client")
+
+        class MilvusManager:
+            def __init__(self):
+                pass
+
+        milvus_client_module.MilvusManager = MilvusManager
+
+        parent_chunk_store_module = types.ModuleType("parent_chunk_store")
+
+        class ParentChunkStore:
+            def __init__(self):
+                pass
+
+            def get_documents_by_ids(self, chunk_ids):
+                return [
+                    {
+                        "chunk_id": "shared_private_scope.md::p0::l2::0",
+                        "filename": "shared_private_scope.md",
+                        "text": "bob parent",
+                        "page_number": 0,
+                        "chunk_level": 2,
+                        "chunk_idx": 1,
+                        "visibility": "private",
+                        "owner_id": "bob",
+                        "document_domain": "essay",
+                    }
+                ]
+
+        parent_chunk_store_module.ParentChunkStore = ParentChunkStore
+
+        langchain_chat_models = types.ModuleType("langchain.chat_models")
+        langchain_chat_models.init_chat_model = lambda *args, **kwargs: None
+
+        with patch.dict(
+            sys.modules,
+            {
+                "embedding": embedding_module,
+                "milvus_client": milvus_client_module,
+                "parent_chunk_store": parent_chunk_store_module,
+                "langchain.chat_models": langchain_chat_models,
+                "config": importlib.import_module("backend.config"),
+            },
+        ):
+            import backend.rag_utils as rag_utils_module
+
+            rag_utils_module = importlib.reload(rag_utils_module)
+
+        docs, merged_count = rag_utils_module._merge_to_parent_level(
+            [
+                {
+                    "chunk_id": "shared_private_scope.md::p0::l3::0",
+                    "parent_chunk_id": "shared_private_scope.md::p0::l2::0",
+                    "root_chunk_id": "shared_private_scope.md::p0::l1::0",
+                    "filename": "shared_private_scope.md",
+                    "text": "alice leaf",
+                    "page_number": 0,
+                    "chunk_level": 3,
+                    "chunk_idx": 2,
+                    "visibility": "private",
+                    "owner_id": "alice",
+                    "document_domain": "essay",
+                    "score": 0.9,
+                }
+            ],
+            threshold=1,
+        )
+
+        self.assertEqual(merged_count, 0)
+        self.assertEqual(docs[0]["owner_id"], "alice")
+        self.assertEqual(docs[0]["chunk_level"], 3)
 
 
 if __name__ == "__main__":

@@ -14,10 +14,10 @@ DEFAULT_CONSISTENCY_LEVEL = "Strong"
 class MilvusManager:
     """Milvus 连接和集合管理 - 支持混合检索"""
 
-    def __init__(self):
+    def __init__(self, collection_name: str | None = None):
         self.host = os.getenv("MILVUS_HOST", "localhost")
         self.port = os.getenv("MILVUS_PORT", "19530")
-        self.collection_name = os.getenv("MILVUS_COLLECTION", "embeddings_collection")
+        self.collection_name = collection_name or os.getenv("MILVUS_COLLECTION", "embeddings_collection")
         self.uri = f"http://{self.host}:{self.port}"
         self.client = None
 

@@ -28,6 +28,12 @@ def format_model_error_message(error: Exception | str, base_url: str | None = No
     message = str(error)
     code = extract_model_error_code(message)
 
+    if "_init_chat_model_helper() missing 1 required positional argument: 'model'" in message:
+        return (
+            "模型配置缺失：当前没有可用的 MODEL 配置，聊天模型无法初始化。"
+            "请在项目根目录的 .env 中补齐 ARK_API_KEY、MODEL 和 BASE_URL 后重试。"
+        )
+
     if code == 429:
         return (
             "上游模型服务触发限流或额度限制（429）。请检查账号额度、模型状态，或稍后重试。\n"

@@ -1,4 +1,5 @@
 from datetime import datetime
+import uuid
 
 from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -62,4 +63,25 @@ class ParentChunk(Base):
     visibility: Mapped[str] = mapped_column(String(20), default="public", nullable=False, index=True)
     owner_id: Mapped[str] = mapped_column(String(100), default="", nullable=False, index=True)
     document_domain: Mapped[str] = mapped_column(String(50), default="knowledge_base", nullable=False, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class EssayDocument(Base):
+    __tablename__ = "essay_documents"
+    __table_args__ = (
+        UniqueConstraint("owner_id", "filename", name="uq_essay_owner_filename"),
+        UniqueConstraint("owner_id", "essay_id", name="uq_essay_owner_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    essay_id: Mapped[str] = mapped_column(String(64), default=lambda: uuid.uuid4().hex, nullable=False, index=True)
+    owner_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    file_type: Mapped[str] = mapped_column(String(50), default="", nullable=False)
+    file_path: Mapped[str] = mapped_column(String(1024), default="", nullable=False)
+    language: Mapped[str] = mapped_column(String(16), default="", nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    chunk_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)

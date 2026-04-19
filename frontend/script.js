@@ -389,6 +389,9 @@ createApp({
             isLoading: false,
             abortController: null,
             sessionId: `session_${Date.now()}`,
+            activeEssayId: '',
+            activeEssayTitle: '',
+            analysisMode: 'general',
             sessions: [],
             dailyQuote: defaultDailyQuote(localStorage.getItem('locale') || 'zh'),
             dailyQuoteLoading: false,
@@ -408,7 +411,6 @@ createApp({
             essayUploadError: '',
             token: localStorage.getItem('accessToken') || '',
             locale: localStorage.getItem('locale') === 'en' ? 'en' : 'zh',
-            theme: localStorage.getItem('theme') === 'light' ? 'light' : 'dark',
             currentUser: null,
             authMode: 'login',
             authForm: {
@@ -445,7 +447,10 @@ createApp({
         filteredEssays() {
             const query = this.globalSearch.trim().toLowerCase();
             if (!query) return this.essays;
-            return this.essays.filter((essay) => (essay.filename || '').toLowerCase().includes(query));
+            return this.essays.filter((essay) => {
+                const title = this.essayDisplayTitle(essay).toLowerCase();
+                return title.includes(query) || (essay.filename || '').toLowerCase().includes(query);
+            });
         },
         filteredDocuments() {
             const query = this.globalSearch.trim().toLowerCase();
@@ -475,7 +480,6 @@ createApp({
     },
     async mounted() {
         this.configureMarked();
-        this.applyTheme();
         this.applyLocale();
         if (this.token) {
             try {
@@ -502,16 +506,12 @@ createApp({
             );
         },
 
-        themeToggleLabel() {
-            return this.theme === 'dark' ? this.t('app.themeDark') : this.t('app.themeLight');
-        },
-
         sessionDisplayTitle(session) {
             return (session && session.title) || this.t('chat.sessionTitleFallback');
         },
 
-        applyTheme() {
-            document.documentElement.dataset.theme = this.theme;
+        essayDisplayTitle(essay) {
+            return (essay && essay.title) || this.essayTitle(essay?.filename);
         },
 
         applyLocale() {
@@ -521,10 +521,6 @@ createApp({
 
         toggleLocale() {
             this.locale = this.locale === 'zh' ? 'en' : 'zh';
-        },
-
-        toggleTheme() {
-            this.theme = this.theme === 'dark' ? 'light' : 'dark';
         },
 
         async fetchDailyQuote() {
@@ -608,8 +604,11 @@ createApp({
                 if (!filename) return;
                 existing.set(filename, {
                     ...(existing.get(filename) || {}),
+                    essay_id: item.essay_id || existing.get(filename)?.essay_id || '',
+                    title: item.title || existing.get(filename)?.title || this.essayTitle(filename),
                     filename,
                     file_type: item.file_type || existing.get(filename)?.file_type || this.inferEssayFileType(filename),
+                    language: item.language || existing.get(filename)?.language || '',
                     chunk_count: item.chunks_processed || existing.get(filename)?.chunk_count || 0,
                     uploaded_at: existing.get(filename)?.uploaded_at || now,
                 });
@@ -624,6 +623,22 @@ createApp({
 
         removeLocalEssay(filename) {
             this.essays = (this.essays || []).filter((essay) => essay.filename !== filename);
+        },
+
+        clearEssaySession() {
+            this.activeEssayId = '';
+            this.activeEssayTitle = '';
+            this.analysisMode = 'general';
+        },
+
+        bindEssaySession(essay, { startNewSession = false } = {}) {
+            if (startNewSession) {
+                this.messages = [];
+                this.sessionId = `session_${Date.now()}`;
+            }
+            this.activeEssayId = essay?.essay_id || '';
+            this.activeEssayTitle = this.essayDisplayTitle(essay);
+            this.analysisMode = (this.activeEssayId || this.activeEssayTitle) ? 'essay' : 'general';
         },
 
         shortChunkText(text) {
@@ -708,6 +723,7 @@ createApp({
                 this.globalSearch = '';
                 this.messages = [];
                 this.sessionId = `session_${Date.now()}`;
+                this.clearEssaySession();
                 await this.loadInitialWorkspaceData();
             } catch (error) {
                 alert(error.message);
@@ -729,6 +745,7 @@ createApp({
             this.currentView = 'chat';
             this.sessionId = `session_${Date.now()}`;
             this.userInput = '';
+            this.clearEssaySession();
             this.dailyQuote = defaultDailyQuote(this.locale);
             this.knowledgeUploadProgress = '';
             this.knowledgeUploadError = '';
@@ -776,7 +793,8 @@ createApp({
 
         openEssayInChat(essay) {
             this.currentView = 'chat';
-            this.userInput = this.t('common.askAnalyzeEssay', { title: this.essayTitle(essay.filename) });
+            this.bindEssaySession(essay, { startNewSession: true });
+            this.userInput = this.t('common.askAnalyzeEssay', { title: this.essayDisplayTitle(essay) });
             this.focusComposer();
             this.$nextTick(() => {
                 if (this.$refs.textarea) {
@@ -844,7 +862,10 @@ createApp({
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         message: text,
-                        session_id: this.sessionId
+                        session_id: this.sessionId,
+                        active_essay_id: this.activeEssayId,
+                        active_essay_title: this.activeEssayTitle,
+                        analysis_mode: this.analysisMode
                     }),
                     signal: this.abortController.signal
                 });
@@ -941,6 +962,7 @@ createApp({
             this.messages = [];
             this.sessionId = `session_${Date.now()}`;
             this.userInput = '';
+            this.clearEssaySession();
             this.focusComposer();
         },
 
@@ -978,10 +1000,14 @@ createApp({
                     ragTrace: msg.rag_trace || null,
                     isThinking: false
                 }));
+                this.activeEssayId = data.active_essay_id || '';
+                this.activeEssayTitle = data.active_essay_title || '';
+                this.analysisMode = data.analysis_mode || ((this.activeEssayId || this.activeEssayTitle) ? 'essay' : 'general');
                 this.$nextTick(() => this.scrollToBottom());
             } catch (error) {
                 alert(this.t('common.loadSessionFailed', { message: error.message }));
                 this.messages = [];
+                this.clearEssaySession();
             }
         },
 
@@ -1198,6 +1224,7 @@ createApp({
             }
 
             try {
+                const deletingEssay = (this.essays || []).find((essay) => essay.filename === filename) || null;
                 const response = await this.authFetch(`/essays/${encodeURIComponent(filename)}`, {
                     method: 'DELETE'
                 });
@@ -1207,6 +1234,9 @@ createApp({
                 }
                 await this.loadEssays({ silent: true });
                 this.removeLocalEssay(filename);
+                if (deletingEssay && (deletingEssay.essay_id === this.activeEssayId || deletingEssay.filename === filename)) {
+                    this.clearEssaySession();
+                }
             } catch (error) {
                 alert(this.t('common.deleteEssayFailed', { message: error.message }));
             }
@@ -1253,10 +1283,6 @@ createApp({
                     await this.fetchDailyQuote();
                 }
             }
-        },
-        theme(value) {
-            localStorage.setItem('theme', value);
-            this.applyTheme();
         }
     }
 }).mount('#app');

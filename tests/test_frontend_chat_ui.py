@@ -29,9 +29,10 @@ class FrontendChatUiLayoutTest(unittest.TestCase):
     def test_chat_column_is_centered_and_readable(self):
         css = (ROOT / "frontend" / "style.css").read_text(encoding="utf-8")
 
-        self.assertRegex(css, r"\.stitch-chat-layout\s*\{[^}]*grid-template-columns:\s*minmax\(260px,\s*320px\)\s*minmax\(0,\s*1fr\)", re.S)
+        self.assertRegex(css, r"\.stitch-chat-layout\s*\{[^}]*grid-template-columns:\s*minmax\(220px,\s*280px\)\s*minmax\(0,\s*1fr\)", re.S)
         self.assertRegex(css, r"\.stitch-chat-layout\s*\{[^}]*align-items:\s*stretch", re.S)
-        self.assertRegex(css, r"\.user-bubble\s*\{[^}]*max-width:\s*min\(620px,\s*72%\)", re.S)
+        self.assertRegex(css, r"\.user-bubble\s*\{[^}]*max-width:\s*min\(760px,\s*78%\)", re.S)
+        self.assertRegex(css, r"\.curator-card\s*\{[^}]*max-width:\s*min\(1180px,\s*100%\)", re.S)
 
     def test_chat_view_has_refined_message_and_composer_layers(self):
         css = (ROOT / "frontend" / "style.css").read_text(encoding="utf-8")
@@ -48,16 +49,22 @@ class FrontendChatUiLayoutTest(unittest.TestCase):
         self.assertRegex(css, r"\.stitch-chat-layout\s*\{[^}]*align-items:\s*stretch", re.S)
         self.assertRegex(css, r"\.deep-input-area\s*\{[^}]*flex:\s*0\s+0\s+auto", re.S)
 
-    def test_theme_palette_matches_stitch_introspective_indigo(self):
+    def test_theme_palette_matches_clinical_void_neutrals(self):
         css = (ROOT / "frontend" / "style.css").read_text(encoding="utf-8")
 
-        self.assertIn("--primary: #2e5bff;", css)
-        self.assertIn("--primary-dim: #184cf2;", css)
-        self.assertIn("--surface: #060e20;", css)
-        self.assertIn("--surface-container-low: #06122c;", css)
-        self.assertIn("--surface-container-highest: #11244c;", css)
-        self.assertIn("--on-surface: #dee5ff;", css)
-        self.assertIn("rgba(46, 91, 255", css)
+        self.assertIn("--primary: #000000;", css)
+        self.assertIn("--primary-dim: #1b1b1b;", css)
+        self.assertIn("--primary-container: #3b3b3b;", css)
+        self.assertIn("--surface: #f9f9f9;", css)
+        self.assertIn("--surface-container-low: #f3f3f3;", css)
+        self.assertIn("--surface-container-high: #e8e8e8;", css)
+        self.assertIn("--on-surface: #1b1b1b;", css)
+        self.assertIn("--outline-variant: #c6c6c6;", css)
+
+    def test_essay_cards_do_not_keep_old_blue_featured_gradient(self):
+        css = (ROOT / "frontend" / "style.css").read_text(encoding="utf-8")
+
+        self.assertRegex(css, r"\.essay-card\.featured\s*\{[^}]*background:\s*var\(--surface-container-lowest\)", re.S)
 
 
 if __name__ == "__main__":

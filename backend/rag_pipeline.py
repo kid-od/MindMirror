@@ -81,6 +81,7 @@ class RewriteStrategy(BaseModel):
 class RAGState(TypedDict):
     question: str
     user_id: Optional[str]
+    session_context: Optional[dict]
     query: str
     context: str
     docs: List[dict]
@@ -218,27 +219,33 @@ def _format_docs(docs: List[dict]) -> str:
 def retrieve_initial(state: RAGState) -> RAGState:
     query = state["question"]
     emit_rag_step("🔍", "正在检索知识库...", f"查询: {query[:50]}")
-    retrieved = retrieve_documents(query, top_k=5, user_id=state.get("user_id"))
+    retrieved = retrieve_documents(
+        query,
+        top_k=5,
+        user_id=state.get("user_id"),
+        session_context=state.get("session_context"),
+    )
     results = retrieved.get("docs", [])
     retrieve_meta = retrieved.get("meta", {})
     context = _format_docs(results)
-    emit_rag_step(
-        "🧱",
-        "三级分块检索",
-        (
-            f"叶子层 L{retrieve_meta.get('leaf_retrieve_level', 3)} 召回，"
-            f"候选 {retrieve_meta.get('candidate_k', 0)}"
-        ),
-    )
-    emit_rag_step(
-        "🧩",
-        "Auto-merging 合并",
-        (
-            f"启用: {bool(retrieve_meta.get('auto_merge_enabled'))}，"
-            f"应用: {bool(retrieve_meta.get('auto_merge_applied'))}，"
-            f"替换片段: {retrieve_meta.get('auto_merge_replaced_chunks', 0)}"
-        ),
-    )
+    if retrieve_meta.get("knowledge_context", {}).get("found"):
+        emit_rag_step(
+            "🧱",
+            "三级分块检索",
+            (
+                f"叶子层 L{retrieve_meta.get('leaf_retrieve_level', 3)} 召回，"
+                f"候选 {retrieve_meta.get('candidate_k', 0)}"
+            ),
+        )
+        emit_rag_step(
+            "🧩",
+            "Auto-merging 合并",
+            (
+                f"启用: {bool(retrieve_meta.get('auto_merge_enabled'))}，"
+                f"应用: {bool(retrieve_meta.get('auto_merge_applied'))}，"
+                f"替换片段: {retrieve_meta.get('auto_merge_replaced_chunks', 0)}"
+            ),
+        )
     emit_rag_step("✅", f"检索完成，找到 {len(results)} 个片段", f"模式: {retrieve_meta.get('retrieval_mode', 'hybrid')}")
     rag_trace = {
         "tool_used": True,
@@ -261,6 +268,8 @@ def retrieve_initial(state: RAGState) -> RAGState:
         "auto_merge_threshold": retrieve_meta.get("auto_merge_threshold"),
         "auto_merge_replaced_chunks": retrieve_meta.get("auto_merge_replaced_chunks"),
         "auto_merge_steps": retrieve_meta.get("auto_merge_steps"),
+        "essay_context": retrieve_meta.get("essay_context"),
+        "knowledge_context": retrieve_meta.get("knowledge_context"),
     }
     return {
         "query": query,
@@ -271,6 +280,18 @@ def retrieve_initial(state: RAGState) -> RAGState:
 
 
 def grade_documents_node(state: RAGState) -> RAGState:
+    essay_context = (state.get("rag_trace") or {}).get("essay_context") or {}
+    if essay_context.get("found"):
+        rag_trace = state.get("rag_trace", {}) or {}
+        rag_trace.update(
+            {
+                "grade_score": "essay_context_found",
+                "grade_route": "generate_answer",
+                "rewrite_needed": False,
+            }
+        )
+        return {"route": "generate_answer", "rag_trace": rag_trace}
+
     grader = _get_grader_model()
     emit_rag_step("📊", "正在评估文档相关性...")
     if not grader:
@@ -379,6 +400,7 @@ def retrieve_expanded(state: RAGState) -> RAGState:
             top_k=5,
             user_id=state.get("user_id"),
             title_hint_query=state["question"],
+            session_context=state.get("session_context"),
         )
         results.extend(retrieved_hyde.get("docs", []))
         hyde_meta = retrieved_hyde.get("meta", {})
@@ -413,6 +435,7 @@ def retrieve_expanded(state: RAGState) -> RAGState:
             top_k=5,
             user_id=state.get("user_id"),
             title_hint_query=state["question"],
+            session_context=state.get("session_context"),
         )
         results.extend(retrieved_stepback.get("docs", []))
         step_meta = retrieved_stepback.get("meta", {})
@@ -479,6 +502,8 @@ def retrieve_expanded(state: RAGState) -> RAGState:
         "auto_merge_threshold": auto_merge_threshold,
         "auto_merge_replaced_chunks": auto_merge_replaced_chunks,
         "auto_merge_steps": auto_merge_steps,
+        "essay_context": state.get("rag_trace", {}).get("essay_context"),
+        "knowledge_context": state.get("rag_trace", {}).get("knowledge_context"),
     })
     return {"docs": deduped, "context": context, "rag_trace": rag_trace}
 
@@ -508,10 +533,11 @@ def build_rag_graph():
 rag_graph = build_rag_graph()
 
 
-def run_rag_graph(question: str, user_id: str | None = None) -> dict:
+def run_rag_graph(question: str, user_id: str | None = None, session_context: dict | None = None) -> dict:
     return rag_graph.invoke({
         "question": question,
         "user_id": user_id,
+        "session_context": session_context,
         "query": question,
         "context": "",
         "docs": [],

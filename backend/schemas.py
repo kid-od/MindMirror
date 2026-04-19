@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Any, Optional, List
 
 
 class RegisterRequest(BaseModel):
@@ -29,6 +29,9 @@ class CurrentUserResponse(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = "default_session"
+    active_essay_id: Optional[str] = None
+    active_essay_title: Optional[str] = None
+    analysis_mode: Optional[str] = "general"
 
 
 class RetrievedChunk(BaseModel):
@@ -68,6 +71,8 @@ class RagTrace(BaseModel):
     auto_merge_threshold: Optional[int] = None
     auto_merge_replaced_chunks: Optional[int] = None
     auto_merge_steps: Optional[int] = None
+    essay_context: Optional[dict[str, Any]] = None
+    knowledge_context: Optional[dict[str, Any]] = None
     retrieved_chunks: Optional[List[RetrievedChunk]] = None
     initial_retrieved_chunks: Optional[List[RetrievedChunk]] = None
     expanded_retrieved_chunks: Optional[List[RetrievedChunk]] = None
@@ -87,6 +92,9 @@ class MessageInfo(BaseModel):
 
 class SessionMessagesResponse(BaseModel):
     messages: List[MessageInfo]
+    analysis_mode: Optional[str] = None
+    active_essay_id: Optional[str] = None
+    active_essay_title: Optional[str] = None
 
 
 class SessionInfo(BaseModel):
@@ -94,6 +102,9 @@ class SessionInfo(BaseModel):
     title: str
     updated_at: str
     message_count: int
+    analysis_mode: Optional[str] = None
+    active_essay_id: Optional[str] = None
+    active_essay_title: Optional[str] = None
 
 
 class SessionListResponse(BaseModel):
@@ -137,8 +148,11 @@ class DocumentDeleteResponse(BaseModel):
 
 
 class EssayInfo(BaseModel):
+    essay_id: Optional[str] = None
+    title: Optional[str] = None
     filename: str
     file_type: str
+    language: Optional[str] = None
     chunk_count: int
     uploaded_at: Optional[str] = None
 

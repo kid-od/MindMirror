@@ -110,6 +110,8 @@ class ExactEssayTitleRetrievalTest(unittest.TestCase):
         self.assertGreater(len(result["docs"]), 0)
         self.assertEqual(result["docs"][0]["filename"], "随笔1.md")
         self.assertEqual(result["docs"][0]["document_domain"], "essay")
+        self.assertTrue(all(doc["document_domain"] == "essay" for doc in result["docs"]))
+        self.assertEqual(result["meta"]["retrieval_mode"], "exact_title_match")
 
     def test_retrieve_documents_can_use_original_question_as_title_hint(self):
         rag_utils_module = _load_rag_utils_module()

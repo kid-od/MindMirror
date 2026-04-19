@@ -31,6 +31,18 @@ class FormatModelErrorMessageTest(unittest.TestCase):
             "Connection error.",
         )
 
+    def test_formats_missing_model_configuration_errors(self):
+        from backend.error_utils import format_model_error_message
+
+        message = format_model_error_message(
+            TypeError("_init_chat_model_helper() missing 1 required positional argument: 'model'")
+        )
+
+        self.assertIn("模型配置缺失", message)
+        self.assertIn("ARK_API_KEY", message)
+        self.assertIn("MODEL", message)
+        self.assertIn(".env", message)
+
 
 if __name__ == "__main__":
     unittest.main()

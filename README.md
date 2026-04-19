@@ -40,9 +40,9 @@ uvicorn backend.app:app --host 0.0.0.0 --port 8000 --reload
 
 ```env
 # ===== Model =====
-ARK_API_KEY=your_ark_api_key
-MODEL=your_model_name
-BASE_URL=https://your-llm-endpoint/v1
+ARK_API_KEY=your_dashscope_api_key
+MODEL=qwen3.6-plus
+BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
 
 # ===== 本地稠密向量（langchain_huggingface，默认 BAAI/bge-m3）=====
 EMBEDDING_MODEL=BAAI/bge-m3
@@ -50,9 +50,9 @@ EMBEDDING_DEVICE=cpu
 DENSE_EMBEDDING_DIM=1024
 
 # ===== Rerank (可选，不配则自动降级) =====
-RERANK_MODEL=your_rerank_model
-RERANK_BINDING_HOST=https://your-rerank-host
-RERANK_API_KEY=your_rerank_api_key
+RERANK_MODEL=qwen3-rerank
+RERANK_BINDING_HOST=https://dashscope.aliyuncs.com/compatible-api/v1
+RERANK_API_KEY=
 
 # ===== Milvus =====
 MILVUS_HOST=127.0.0.1

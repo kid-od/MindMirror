@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class FrontendStitchLayoutTest(unittest.TestCase):
-    def test_template_contains_stitch_indigo_shell_regions(self):
+    def test_template_contains_shell_regions_and_single_preference_control(self):
         html = (ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
 
         for token in [
@@ -25,6 +25,9 @@ class FrontendStitchLayoutTest(unittest.TestCase):
             "session-delete",
         ]:
             self.assertIn(token, html)
+
+        self.assertIn("toggleLocale", html)
+        self.assertNotIn("toggleTheme", html)
 
 
 if __name__ == "__main__":

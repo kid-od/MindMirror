@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PsycheArchive</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-light.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
@@ -16,7 +16,6 @@
         <div v-if="!isAuthenticated" class="auth-screen stitch-auth-shell">
             <div class="auth-preferences">
                 <button class="preference-toggle" @click="toggleLocale">{{ t('app.localeToggle') }}</button>
-                <button class="preference-toggle" @click="toggleTheme">{{ themeToggleLabel() }}</button>
             </div>
             <section class="auth-panel stitch-auth-panel">
                 <div class="auth-glow stitch-auth-glow auth-glow-primary stitch-auth-glow-primary"></div>
@@ -106,7 +105,6 @@
                     <div class="psyche-top-actions">
                         <div class="topbar-preferences">
                             <button class="preference-toggle" @click="toggleLocale">{{ t('app.localeToggle') }}</button>
-                            <button class="preference-toggle" @click="toggleTheme">{{ themeToggleLabel() }}</button>
                         </div>
                         <span class="app-icon app-icon-notifications" aria-hidden="true"></span>
                         <span class="app-icon app-icon-account-circle" aria-hidden="true"></span>
@@ -171,7 +169,7 @@
                             <div v-if="recentEssays.length" class="activity-list">
                                 <button v-for="essay in recentEssays" :key="essay.filename" class="activity-entry" @click="openEssayInChat(essay)">
                                     <span>{{ displayEssayDate(essay) }}</span>
-                                    <strong>{{ essayTitle(essay.filename) }}</strong>
+                                    <strong>{{ essayDisplayTitle(essay) }}</strong>
                                 </button>
                             </div>
                             <div v-else class="empty-copy">
@@ -299,7 +297,7 @@
                                 <span>{{ displayEssayDate(essay) }}</span>
                                 <span>{{ t('essays.analyzed') }}</span>
                             </div>
-                            <h3>{{ essayTitle(essay.filename) }}</h3>
+                            <h3>{{ essayDisplayTitle(essay) }}</h3>
                             <p>{{ essay.chunk_count }} {{ t('essays.chunkLabel') }}</p>
                             <div class="essay-card-footer">
                                 <span class="insight-chip">{{ essay.file_type }}</span>
@@ -363,6 +361,7 @@
                             <div>
                                 <h2>{{ t('chat.title') }}</h2>
                                 <p>{{ t('chat.subtitle') }}</p>
+                                <p v-if="activeEssayTitle" class="chat-active-essay">{{ locale === 'zh' ? '当前绑定随笔：' : 'Current essay:' }} {{ activeEssayTitle }}</p>
                             </div>
                             <span class="kb-active">
                                 <span class="app-icon app-icon-psychology-alt" aria-hidden="true"></span>
