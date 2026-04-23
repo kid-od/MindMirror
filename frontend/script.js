@@ -35,6 +35,12 @@ const DEFAULT_DAILY_QUOTES = {
     }
 };
 
+const VIEW_ALIASES = {
+    knowledge: 'knowledge_base',
+    essays: 'reflections',
+    chat: 'ai_explorer'
+};
+
 const TRANSLATIONS = {
     zh: {
         app: {
@@ -59,6 +65,11 @@ const TRANSLATIONS = {
         },
         nav: {
             dashboard: '仪表盘',
+            knowledge_base: '知识库',
+            reflections: '随笔档案',
+            ai_explorer: 'AI 探索',
+            insights: '洞察',
+            timeline: '时间线',
             knowledge: '知识库',
             essays: '我的随笔',
             chat: 'AI 对话',
@@ -212,6 +223,11 @@ const TRANSLATIONS = {
         },
         nav: {
             dashboard: 'Dashboard',
+            knowledge_base: 'Knowledge Base',
+            reflections: 'Reflections',
+            ai_explorer: 'AI Explorer',
+            insights: 'Insights',
+            timeline: 'Timeline',
             knowledge: 'Knowledge Base',
             essays: 'My Essays',
             chat: 'AI Chat',
@@ -381,6 +397,37 @@ function defaultDailyQuote(locale) {
     return { ...(locale === 'zh' ? DEFAULT_DAILY_QUOTES.zh : DEFAULT_DAILY_QUOTES.en) };
 }
 
+function emptyInsights() {
+    return {
+        totals: { essays: 0, sessions: 0, documents: 0 },
+        top_themes: [],
+        activity: [],
+        recent_essays: [],
+        recent_sessions: []
+    };
+}
+
+function normalizeDailyQuote(quote, locale = 'zh') {
+    const fallback = defaultDailyQuote(locale);
+    const candidate = quote && typeof quote === 'object' ? quote : {};
+    const text = typeof candidate.text === 'string' ? candidate.text.trim() : '';
+    const author = typeof candidate.author === 'string' ? candidate.author.trim() : '';
+    const source = typeof candidate.source === 'string' ? candidate.source.trim() : '';
+    const language = candidate.language === 'zh' ? 'zh' : candidate.language === 'en' ? 'en' : fallback.language;
+
+    if (!text) {
+        return fallback;
+    }
+
+    return {
+        text,
+        author: author || fallback.author,
+        language,
+        source: source || fallback.source,
+        fallback: Boolean(candidate.fallback)
+    };
+}
+
 createApp({
     data() {
         return {
@@ -393,10 +440,14 @@ createApp({
             activeEssayTitle: '',
             analysisMode: 'general',
             sessions: [],
-            dailyQuote: defaultDailyQuote(localStorage.getItem('locale') || 'zh'),
+            insights: emptyInsights(),
+            insightsLoading: false,
+            timelineGroups: [],
+            timelineLoading: false,
+            dailyQuote: normalizeDailyQuote(null, localStorage.getItem('locale') || 'zh'),
             dailyQuoteLoading: false,
             isComposing: false,
-            currentView: 'chat',
+            currentView: 'dashboard',
             globalSearch: '',
             documents: [],
             documentsLoading: false,
@@ -435,13 +486,16 @@ createApp({
         topThemes() {
             return TOP_THEMES[this.locale] || TOP_THEMES.zh;
         },
+        displayDailyQuote() {
+            return normalizeDailyQuote(this.dailyQuote, this.locale);
+        },
         chatSuggestions() {
             return CHAT_SUGGESTIONS[this.locale] || CHAT_SUGGESTIONS.zh;
         },
         currentSearchPlaceholder() {
-            if (this.currentView === 'knowledge') return this.t('common.searchKnowledge');
-            if (this.currentView === 'essays') return this.t('common.searchEssays');
-            if (this.currentView === 'chat') return this.t('common.searchInsights');
+            if (this.currentView === 'knowledge_base') return this.t('common.searchKnowledge');
+            if (this.currentView === 'reflections') return this.t('common.searchEssays');
+            if (this.currentView === 'ai_explorer') return this.t('common.searchInsights');
             return this.t('common.searchReflections');
         },
         filteredEssays() {
@@ -476,6 +530,21 @@ createApp({
         },
         latestSession() {
             return this.sessions[0] || null;
+        },
+        insightActivity() {
+            return (this.insights.activity || []).slice(-7);
+        },
+        insightRecentEssays() {
+            return this.insights.recent_essays || [];
+        },
+        insightRecentSessions() {
+            return this.insights.recent_sessions || [];
+        },
+        timelineDayCount() {
+            return this.timelineGroups.length;
+        },
+        timelineEventCount() {
+            return this.timelineGroups.reduce((total, group) => total + ((group && group.items && group.items.length) || 0), 0);
         }
     },
     async mounted() {
@@ -514,6 +583,10 @@ createApp({
             return (essay && essay.title) || this.essayTitle(essay?.filename);
         },
 
+        normalizeViewName(view) {
+            return VIEW_ALIASES[view] || view;
+        },
+
         applyLocale() {
             document.documentElement.lang = this.locale === 'zh' ? 'zh-CN' : 'en';
             document.title = this.t('app.name');
@@ -525,7 +598,7 @@ createApp({
 
         async fetchDailyQuote() {
             if (!this.isAuthenticated) {
-                this.dailyQuote = defaultDailyQuote(this.locale);
+                this.dailyQuote = normalizeDailyQuote(null, this.locale);
                 return;
             }
 
@@ -535,9 +608,9 @@ createApp({
                 if (!response.ok) {
                     throw new Error('Failed to fetch daily quote');
                 }
-                this.dailyQuote = await response.json();
+                this.dailyQuote = normalizeDailyQuote(await response.json(), this.locale);
             } catch (_) {
-                this.dailyQuote = defaultDailyQuote(this.locale);
+                this.dailyQuote = normalizeDailyQuote(null, this.locale);
             } finally {
                 this.dailyQuoteLoading = false;
             }
@@ -625,6 +698,39 @@ createApp({
             this.essays = (this.essays || []).filter((essay) => essay.filename !== filename);
         },
 
+        revokeDocumentCoverUrls(documents = this.documents) {
+            (documents || []).forEach((doc) => {
+                if (doc && doc.preview_url) {
+                    URL.revokeObjectURL(doc.preview_url);
+                }
+            });
+        },
+
+        async attachDocumentCoverPreview(doc) {
+            if (!doc?.cover_url) {
+                return doc;
+            }
+
+            try {
+                const response = await this.authFetch(doc.cover_url);
+                if (!response.ok) {
+                    return { ...doc, preview_url: '' };
+                }
+
+                const blob = await response.blob();
+                return {
+                    ...doc,
+                    preview_url: URL.createObjectURL(blob)
+                };
+            } catch (error) {
+                return { ...doc, preview_url: '' };
+            }
+        },
+
+        async hydrateDocumentCovers(documents = []) {
+            return Promise.all((documents || []).map((doc) => this.attachDocumentCoverPreview(doc)));
+        },
+
         clearEssaySession() {
             this.activeEssayId = '';
             this.activeEssayTitle = '';
@@ -645,6 +751,29 @@ createApp({
             const value = (text || '').trim();
             if (value.length <= 180) return value || this.t('chat.noExcerpt');
             return `${value.slice(0, 177)}...`;
+        },
+
+        themeCountLabel(theme) {
+            const count = Number(theme?.count || 0);
+            return this.locale === 'zh' ? `${count} 次出现` : `${count} mentions`;
+        },
+
+        timelineKindLabel(kind) {
+            const labels = this.locale === 'zh'
+                ? { essay: '随笔', session: '会话', document: '知识' }
+                : { essay: 'Essay', session: 'Session', document: 'Knowledge' };
+            return labels[kind] || kind;
+        },
+
+        timelineCtaLabel(item) {
+            if (item?.kind === 'essay') return this.locale === 'zh' ? '在 AI 中展开' : 'Open in AI';
+            if (item?.kind === 'session') return this.locale === 'zh' ? '继续会话' : 'Resume session';
+            return this.locale === 'zh' ? '查看知识库' : 'Open library';
+        },
+
+        activityBarStyle(value) {
+            const height = Math.max(12, Math.min(72, Number(value || 0) * 18));
+            return { height: `${height}px` };
         },
 
         authHeaders(extra = {}) {
@@ -719,7 +848,7 @@ createApp({
                 localStorage.setItem('accessToken', this.token);
                 this.authForm.password = '';
                 this.authForm.admin_code = '';
-                this.currentView = 'chat';
+                this.currentView = 'dashboard';
                 this.globalSearch = '';
                 this.messages = [];
                 this.sessionId = `session_${Date.now()}`;
@@ -733,20 +862,31 @@ createApp({
         },
 
         handleLogout() {
+            if (this.abortController) {
+                this.abortController.abort();
+            }
+            this.revokeDocumentCoverUrls();
             this.token = '';
             this.currentUser = null;
+            this.abortController = null;
+            this.isLoading = false;
             this.messages = [];
             this.sessions = [];
             this.documents = [];
             this.essays = [];
+            this.insights = { ...emptyInsights() };
+            this.insightsLoading = false;
+            this.timelineGroups = [];
+            this.timelineLoading = false;
             this.selectedKnowledgeFiles = [];
             this.selectedEssayFiles = [];
             this.globalSearch = '';
-            this.currentView = 'chat';
+            this.currentView = 'dashboard';
             this.sessionId = `session_${Date.now()}`;
             this.userInput = '';
             this.clearEssaySession();
             this.dailyQuote = defaultDailyQuote(this.locale);
+            this.dailyQuoteLoading = false;
             this.knowledgeUploadProgress = '';
             this.knowledgeUploadError = '';
             this.essayUploadProgress = '';
@@ -756,19 +896,22 @@ createApp({
 
         setCurrentView(view) {
             if (!this.isAuthenticated) return;
-            if (view === 'knowledge' && !this.isAdmin) {
-                this.currentView = 'chat';
+            const nextView = this.normalizeViewName(view);
+            if (nextView === 'knowledge_base' && !this.isAdmin) {
+                this.currentView = 'dashboard';
                 return;
             }
-            this.currentView = view;
-            if (view === 'knowledge') this.loadDocuments({ silentForbidden: true });
-            if (view === 'essays') this.loadEssays({ silent: true });
-            if (view === 'chat') this.loadSessions({ silent: true });
+            this.currentView = nextView;
+            if (nextView === 'knowledge_base') this.loadDocuments({ silentForbidden: true });
+            if (nextView === 'reflections') this.loadEssays({ silent: true });
+            if (nextView === 'ai_explorer') this.loadSessions({ silent: true });
+            if (nextView === 'insights') this.loadInsights({ silent: true });
+            if (nextView === 'timeline') this.loadTimeline({ silent: true });
         },
 
         startNewReflection() {
             this.handleNewChat();
-            this.setCurrentView('chat');
+            this.setCurrentView('ai_explorer');
             this.focusComposer();
         },
 
@@ -781,7 +924,7 @@ createApp({
         },
 
         applyChatSuggestion(prompt) {
-            this.currentView = 'chat';
+            this.currentView = 'ai_explorer';
             this.userInput = prompt;
             this.focusComposer();
             this.$nextTick(() => {
@@ -792,7 +935,7 @@ createApp({
         },
 
         openEssayInChat(essay) {
-            this.currentView = 'chat';
+            this.currentView = 'ai_explorer';
             this.bindEssaySession(essay, { startNewSession: true });
             this.userInput = this.t('common.askAnalyzeEssay', { title: this.essayDisplayTitle(essay) });
             this.focusComposer();
@@ -801,6 +944,33 @@ createApp({
                     this.autoResize({ target: this.$refs.textarea });
                 }
             });
+        },
+
+        async openTimelineItem(item) {
+            if (!item) return;
+
+            if (item.kind === 'session' && item.reference) {
+                this.loadSession(item.reference);
+                return;
+            }
+
+            if (item.kind === 'essay') {
+                const essay = (this.essays || []).find((candidate) =>
+                    candidate.essay_id === item.reference ||
+                    candidate.filename === item.reference ||
+                    this.essayDisplayTitle(candidate) === item.title
+                );
+                if (essay) {
+                    this.openEssayInChat(essay);
+                    return;
+                }
+                this.setCurrentView('reflections');
+                return;
+            }
+
+            if (item.kind === 'document') {
+                this.setCurrentView('knowledge_base');
+            }
         },
 
         handleCompositionStart() {
@@ -833,7 +1003,7 @@ createApp({
             const text = this.userInput.trim();
             if (!text || this.isLoading || this.isComposing) return;
 
-            this.currentView = 'chat';
+            this.currentView = 'ai_explorer';
             this.messages.push({
                 text,
                 isUser: true
@@ -983,9 +1153,46 @@ createApp({
             }
         },
 
+        async loadInsights({ silent = false } = {}) {
+            if (!this.isAuthenticated) return;
+            this.insightsLoading = true;
+            try {
+                const response = await this.authFetch('/insights');
+                if (!response.ok) {
+                    throw new Error(this.locale === 'zh' ? '无法加载洞察' : 'Unable to load insights');
+                }
+                this.insights = await response.json();
+            } catch (error) {
+                if (!silent) {
+                    alert(error.message);
+                }
+            } finally {
+                this.insightsLoading = false;
+            }
+        },
+
+        async loadTimeline({ silent = false } = {}) {
+            if (!this.isAuthenticated) return;
+            this.timelineLoading = true;
+            try {
+                const response = await this.authFetch('/timeline');
+                if (!response.ok) {
+                    throw new Error(this.locale === 'zh' ? '无法加载时间线' : 'Unable to load timeline');
+                }
+                const payload = await response.json();
+                this.timelineGroups = payload.groups || [];
+            } catch (error) {
+                if (!silent) {
+                    alert(error.message);
+                }
+            } finally {
+                this.timelineLoading = false;
+            }
+        },
+
         async loadSession(sessionId) {
             this.sessionId = sessionId;
-            this.currentView = 'chat';
+            this.currentView = 'ai_explorer';
 
             try {
                 const response = await this.authFetch(`/sessions/${encodeURIComponent(sessionId)}`);
@@ -1013,6 +1220,7 @@ createApp({
 
         async loadDocuments({ silentForbidden = false } = {}) {
             if (!this.isAdmin) {
+                this.revokeDocumentCoverUrls();
                 this.documents = [];
                 return;
             }
@@ -1024,7 +1232,9 @@ createApp({
                     throw new Error(data.detail || this.t('common.loadKnowledgeFallback'));
                 }
                 const data = await response.json();
-                this.documents = data.documents || [];
+                const hydratedDocuments = await this.hydrateDocumentCovers(data.documents || []);
+                this.revokeDocumentCoverUrls();
+                this.documents = hydratedDocuments;
             } catch (error) {
                 if (!(silentForbidden && /权限|permission|forbidden/i.test(error.message))) {
                     alert(this.t('common.loadKnowledgeFailed', { message: error.message }));
@@ -1278,7 +1488,7 @@ createApp({
             async handler(value) {
                 localStorage.setItem('locale', value);
                 this.applyLocale();
-                this.dailyQuote = defaultDailyQuote(value);
+                this.dailyQuote = normalizeDailyQuote(null, value);
                 if (this.isAuthenticated) {
                     await this.fetchDailyQuote();
                 }

@@ -7,16 +7,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class FrontendPsycheArchiveWorkspaceTest(unittest.TestCase):
-    def test_script_defines_bilingual_branding_and_navigation_copy(self):
+    def test_script_defines_stitch_navigation_copy(self):
         script = (ROOT / "frontend" / "script.js").read_text(encoding="utf-8")
 
         for token in [
-            "PsycheArchive",
-            "心灵策展人",
             "Dashboard",
             "Knowledge Base",
-            "My Essays",
-            "AI Chat",
+            "Reflections",
+            "AI Explorer",
+            "Insights",
+            "Timeline",
             "Settings",
         ]:
             self.assertIn(token, script)
@@ -34,13 +34,12 @@ class FrontendPsycheArchiveWorkspaceTest(unittest.TestCase):
         ]:
             self.assertIn(token, html)
 
-    def test_script_tracks_psychearchive_views_and_private_essays(self):
+    def test_script_routes_home_to_dashboard_and_essay_actions_to_ai_explorer(self):
         script = (ROOT / "frontend" / "script.js").read_text(encoding="utf-8")
 
-        self.assertRegex(script, r"currentView:\s*'chat'")
-        self.assertIn("this.currentView = 'chat';", script)
-        self.assertRegex(script, r"essays:\s*\[\]")
-        self.assertRegex(script, r"selectedEssayFiles:\s*\[\]")
+        self.assertRegex(script, r"currentView:\s*'dashboard'")
+        self.assertIn("this.currentView = 'dashboard';", script)
+        self.assertIn("this.currentView = 'ai_explorer';", script)
         self.assertIn("/essays", script)
         self.assertIn("/essays/upload/stream", script)
 

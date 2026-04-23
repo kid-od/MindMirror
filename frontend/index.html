@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PsycheArchive</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-light.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
@@ -13,13 +13,11 @@
 </head>
 <body>
     <div id="app">
-        <div v-if="!isAuthenticated" class="auth-screen stitch-auth-shell">
+        <div v-if="!isAuthenticated" class="auth-screen stitch-auth-shell stitch-landing-shell">
             <div class="auth-preferences">
                 <button class="preference-toggle" @click="toggleLocale">{{ t('app.localeToggle') }}</button>
             </div>
-            <section class="auth-panel stitch-auth-panel">
-                <div class="auth-glow stitch-auth-glow auth-glow-primary stitch-auth-glow-primary"></div>
-                <div class="auth-glow stitch-auth-glow auth-glow-tertiary stitch-auth-glow-secondary"></div>
+            <section class="stitch-landing-hero">
                 <div class="auth-brand stitch-auth-brand">
                     <div class="auth-avatar">P</div>
                     <div>
@@ -28,6 +26,20 @@
                         <p class="auth-copy">{{ t('app.authCopy') }}</p>
                     </div>
                 </div>
+                <div class="landing-stat-strip">
+                    <article class="landing-stat-card">
+                        <strong>{{ locale === 'zh' ? '更安静的布局' : 'A calmer layout' }}</strong>
+                        <span>{{ locale === 'zh' ? '把上传、写作和分析收进同一座数字庇护所。' : 'Upload, write, and analyze inside one digital sanctuary.' }}</span>
+                    </article>
+                    <article class="landing-stat-card">
+                        <strong>{{ locale === 'zh' ? '保持完整能力' : 'Keep the full workflow' }}</strong>
+                        <span>{{ locale === 'zh' ? '登录、随笔、知识库和 AI 对话都保留。' : 'Auth, reflections, knowledge, and AI chat stay intact.' }}</span>
+                    </article>
+                </div>
+            </section>
+            <section class="auth-panel stitch-auth-panel stitch-auth-card">
+                <div class="auth-glow stitch-auth-glow auth-glow-primary stitch-auth-glow-primary"></div>
+                <div class="auth-glow stitch-auth-glow auth-glow-tertiary stitch-auth-glow-secondary"></div>
                 <div class="auth-fields">
                     <input v-model="authForm.username" type="text" :placeholder="t('auth.username')">
                     <input v-model="authForm.password" type="password" :placeholder="t('auth.password')">
@@ -66,17 +78,25 @@
                         <span class="app-icon app-icon-dashboard" aria-hidden="true"></span>
                         {{ t('nav.dashboard') }}
                     </button>
-                    <button @click="setCurrentView('knowledge')" :class="['psyche-nav-item', { active: currentView === 'knowledge' }]" v-if="isAdmin">
+                    <button @click="setCurrentView('knowledge_base')" :class="['psyche-nav-item', { active: currentView === 'knowledge_base' }]" v-if="isAdmin">
                         <span class="app-icon app-icon-database" aria-hidden="true"></span>
-                        {{ t('nav.knowledge') }}
+                        {{ t('nav.knowledge_base') }}
                     </button>
-                    <button @click="setCurrentView('essays')" :class="['psyche-nav-item', { active: currentView === 'essays' }]">
+                    <button @click="setCurrentView('reflections')" :class="['psyche-nav-item', { active: currentView === 'reflections' }]">
                         <span class="app-icon app-icon-article" aria-hidden="true"></span>
-                        {{ t('nav.essays') }}
+                        {{ t('nav.reflections') }}
                     </button>
-                    <button @click="setCurrentView('chat')" :class="['psyche-nav-item', { active: currentView === 'chat' }]">
+                    <button @click="setCurrentView('ai_explorer')" :class="['psyche-nav-item', { active: currentView === 'ai_explorer' }]">
                         <span class="app-icon app-icon-psychology" aria-hidden="true"></span>
-                        {{ t('nav.chat') }}
+                        {{ t('nav.ai_explorer') }}
+                    </button>
+                    <button @click="setCurrentView('insights')" :class="['psyche-nav-item', { active: currentView === 'insights' }]">
+                        <span class="app-icon app-icon-insights" aria-hidden="true"></span>
+                        {{ t('nav.insights') }}
+                    </button>
+                    <button @click="setCurrentView('timeline')" :class="['psyche-nav-item', { active: currentView === 'timeline' }]">
+                        <span class="app-icon app-icon-timeline" aria-hidden="true"></span>
+                        {{ t('nav.timeline') }}
                     </button>
                     <button @click="setCurrentView('settings')" :class="['psyche-nav-item', { active: currentView === 'settings' }]">
                         <span class="app-icon app-icon-settings" aria-hidden="true"></span>
@@ -96,7 +116,7 @@
                 </div>
             </aside>
 
-            <main class="psyche-main stitch-main">
+            <main class="psyche-main stitch-main stitch-main-stage">
                 <header class="psyche-topbar stitch-topbar">
                     <label class="psyche-search stitch-search">
                         <span class="app-icon app-icon-search" aria-hidden="true"></span>
@@ -111,11 +131,13 @@
                     </div>
                 </header>
 
-                <section v-if="currentView === 'dashboard'" class="psyche-canvas dashboard-view stitch-dashboard-grid">
+                <section v-if="currentView === 'dashboard'" class="psyche-canvas dashboard-view stitch-dashboard-grid stitch-dashboard-overview">
                     <section class="quote-card">
                         <span class="app-icon app-icon-format-quote quote-icon" aria-hidden="true"></span>
-                        <h2>{{ dailyQuoteLoading ? t('dashboard.quoteLoading') : `"${dailyQuote.text}"` }}</h2>
-                        <p v-if="!dailyQuoteLoading">— {{ dailyQuote.author }}</p>
+                        <div class="quote-card-copy">
+                            <h2>{{ dailyQuoteLoading ? t('dashboard.quoteLoading') : `"${displayDailyQuote.text}"` }}</h2>
+                            <p v-if="!dailyQuoteLoading">— {{ displayDailyQuote.author }}</p>
+                        </div>
                     </section>
 
                     <section class="bento-grid">
@@ -164,7 +186,7 @@
                         <article class="activity-card">
                             <div class="activity-head">
                                 <h3>{{ t('dashboard.recentEssays') }}</h3>
-                                <button @click="setCurrentView('essays')">{{ t('dashboard.viewAll') }}</button>
+                                <button @click="setCurrentView('reflections')">{{ t('dashboard.viewAll') }}</button>
                             </div>
                             <div v-if="recentEssays.length" class="activity-list">
                                 <button v-for="essay in recentEssays" :key="essay.filename" class="activity-entry" @click="openEssayInChat(essay)">
@@ -180,7 +202,7 @@
                         <article class="activity-card">
                             <div class="activity-head">
                                 <h3>{{ t('dashboard.lastAnalysis') }}</h3>
-                                <button @click="setCurrentView('chat')">{{ t('dashboard.openChat') }}</button>
+                                <button @click="setCurrentView('ai_explorer')">{{ t('dashboard.openChat') }}</button>
                             </div>
                             <div v-if="latestSession" class="analysis-highlight">
                                 <span class="status-pill">{{ t('dashboard.knowledgeActive') }}</span>
@@ -194,22 +216,39 @@
                     </section>
                 </section>
 
-                <section v-else-if="currentView === 'knowledge'" class="psyche-canvas knowledge-view stitch-knowledge-stage">
+                <section v-else-if="currentView === 'knowledge_base'" class="psyche-canvas knowledge-view stitch-knowledge-stage knowledge-library-grid">
                     <article v-if="!isAdmin" class="restricted-card">
                         <h2>{{ t('knowledge.title') }}</h2>
                         <p>{{ t('knowledge.restricted') }}</p>
                     </article>
 
                     <template v-else>
-                        <div class="page-hero">
-                            <div>
-                                <h2>{{ t('knowledge.title') }}</h2>
-                                <p>{{ t('knowledge.hero') }}</p>
+                        <div class="knowledge-stage-shell">
+                            <div class="knowledge-hero-panel">
+                                <div class="page-hero knowledge-page-hero">
+                                    <div>
+                                        <h2>{{ t('knowledge.title') }}</h2>
+                                        <p>{{ t('knowledge.hero') }}</p>
+                                    </div>
+                                </div>
+                                <div class="knowledge-upload-actions">
+                                    <button class="stitch-primary" @click="$refs.knowledgeFileInput.click()">
+                                        <span class="app-icon app-icon-cloud-upload" aria-hidden="true"></span>
+                                        {{ t('knowledge.newUpload') }}
+                                    </button>
+                                </div>
+                                <div v-if="knowledgeUploadProgress || knowledgeUploadError" class="stitch-upload-status knowledge-upload-status">
+                                    <p>{{ knowledgeUploadProgress }}</p>
+                                    <pre v-if="knowledgeUploadError">{{ knowledgeUploadError }}</pre>
+                                </div>
                             </div>
-                            <button class="stitch-primary" @click="$refs.knowledgeFileInput.click()">
-                                <span class="app-icon app-icon-cloud-upload" aria-hidden="true"></span>
-                                {{ t('knowledge.newUpload') }}
-                            </button>
+
+                            <div class="upload-dropzone knowledge-dropzone" @click="$refs.knowledgeFileInput.click()">
+                                <span class="app-icon app-icon-library-add" aria-hidden="true"></span>
+                                <h3>{{ t('knowledge.dropTitle') }}</h3>
+                                <p>{{ t('knowledge.dropBody') }}</p>
+                                <strong>{{ t('knowledge.browse') }} <span class="app-icon app-icon-arrow-forward" aria-hidden="true"></span></strong>
+                            </div>
                         </div>
 
                         <input
@@ -221,18 +260,6 @@
                             @change="handleKnowledgeFileSelect"
                         >
 
-                        <div class="upload-dropzone" @click="$refs.knowledgeFileInput.click()">
-                            <span class="app-icon app-icon-library-add" aria-hidden="true"></span>
-                            <h3>{{ t('knowledge.dropTitle') }}</h3>
-                            <p>{{ t('knowledge.dropBody') }}</p>
-                            <strong>{{ t('knowledge.browse') }} <span class="app-icon app-icon-arrow-forward" aria-hidden="true"></span></strong>
-                        </div>
-
-                        <div v-if="knowledgeUploadProgress || knowledgeUploadError" class="stitch-upload-status">
-                            <p>{{ knowledgeUploadProgress }}</p>
-                            <pre v-if="knowledgeUploadError">{{ knowledgeUploadError }}</pre>
-                        </div>
-
                         <section class="document-stack">
                             <article v-if="documentsLoading" class="knowledge-card">
                                 <p>{{ t('knowledge.loading') }}</p>
@@ -240,22 +267,27 @@
                             <article v-else-if="filteredDocuments.length === 0" class="knowledge-card">
                                 <p>{{ t('knowledge.empty') }}</p>
                             </article>
-                            <article v-for="doc in filteredDocuments" :key="doc.filename" class="knowledge-card">
-                                <div class="document-meta">
-                                    <span class="insight-chip">{{ doc.file_type }}</span>
-                                    <span>{{ doc.chunk_count }} {{ locale === 'zh' ? '个分块' : 'chunks' }}</span>
+                            <article v-for="doc in filteredDocuments" :key="doc.filename" :class="['knowledge-card', { 'has-cover': doc.preview_url }]">
+                                <div v-if="doc.preview_url" class="knowledge-card-cover">
+                                    <img :src="doc.preview_url" :alt="doc.filename" loading="lazy">
                                 </div>
-                                <h3>{{ doc.filename }}</h3>
-                                <p>{{ t('knowledge.sourceCaption') }}</p>
-                                <div class="document-actions">
-                                    <button class="ghost-action" @click="deleteDocument(doc.filename)">{{ t('knowledge.delete') }}</button>
+                                <div class="knowledge-card-body">
+                                    <div class="document-meta">
+                                        <span class="insight-chip">{{ doc.file_type }}</span>
+                                        <span>{{ doc.chunk_count }} {{ locale === 'zh' ? '个分块' : 'chunks' }}</span>
+                                    </div>
+                                    <h3>{{ doc.filename }}</h3>
+                                    <p>{{ t('knowledge.sourceCaption') }}</p>
+                                    <div class="document-actions">
+                                        <button class="ghost-action" @click="deleteDocument(doc.filename)">{{ t('knowledge.delete') }}</button>
+                                    </div>
                                 </div>
                             </article>
                         </section>
                     </template>
                 </section>
 
-                <section v-else-if="currentView === 'essays'" class="psyche-canvas essays-view stitch-essays-grid">
+                <section v-else-if="currentView === 'reflections'" class="psyche-canvas essays-view stitch-essays-grid reflection-archive-grid">
                     <div class="page-hero">
                         <div>
                             <h2>{{ t('essays.title') }}</h2>
@@ -313,7 +345,7 @@
                     </div>
                 </section>
 
-                <section v-else-if="currentView === 'chat'" class="psyche-chat-layout stitch-chat-layout">
+                <section v-else-if="currentView === 'ai_explorer'" class="psyche-chat-layout stitch-chat-layout stitch-explorer-shell">
                     <aside class="reflection-list">
                         <div class="activity-head">
                             <h2>{{ t('chat.recents') }}</h2>
@@ -430,7 +462,131 @@
                     </section>
                 </section>
 
-                <section v-else class="psyche-canvas settings-view stitch-settings-grid">
+                <section v-else-if="currentView === 'insights'" class="psyche-canvas insights-view stitch-insights-grid">
+                    <div class="page-hero">
+                        <div>
+                            <h2>{{ t('nav.insights') }}</h2>
+                            <p>{{ locale === 'zh' ? '从你的随笔与会话里提取正在反复出现的主题。' : 'Surface the themes that keep returning across essays and sessions.' }}</p>
+                        </div>
+                    </div>
+                    <div class="bento-grid">
+                        <article class="bento-card stat-card">
+                            <p>{{ t('dashboard.totalEssays') }}</p>
+                            <strong>{{ insights.totals.essays }}</strong>
+                        </article>
+                        <article class="bento-card stat-card">
+                            <p>{{ t('dashboard.deepSessions') }}</p>
+                            <strong>{{ insights.totals.sessions }}</strong>
+                        </article>
+                        <article class="bento-card stat-card">
+                            <p>{{ t('dashboard.publicDocs') }}</p>
+                            <strong>{{ insights.totals.documents }}</strong>
+                        </article>
+                    </div>
+                    <section class="activity-card">
+                        <div class="activity-head">
+                            <h3>{{ t('dashboard.topThemes') }}</h3>
+                            <span class="status-pill">{{ insights.top_themes.length }} {{ locale === 'zh' ? '个信号' : 'signals' }}</span>
+                        </div>
+                        <div v-if="insightsLoading" class="empty-copy">{{ t('common.loading') }}</div>
+                        <div v-else-if="!insights.top_themes.length" class="empty-copy">{{ locale === 'zh' ? '还没有足够数据生成主题。' : 'Not enough activity yet to surface themes.' }}</div>
+                        <div v-else class="chip-row">
+                            <span v-for="theme in insights.top_themes" :key="theme.label" class="insight-chip">{{ theme.label }} · {{ themeCountLabel(theme) }}</span>
+                        </div>
+                    </section>
+
+                    <section class="insight-signal-grid">
+                        <article class="activity-card">
+                            <div class="activity-head">
+                                <h3>{{ t('dashboard.recentEssays') }}</h3>
+                            </div>
+                            <div v-if="!insightRecentEssays.length" class="empty-copy">{{ t('dashboard.emptyEssays') }}</div>
+                            <div v-else class="activity-list">
+                                <button v-for="essay in insightRecentEssays" :key="essay.filename" class="activity-entry" @click="openEssayInChat(essay)">
+                                    <span>{{ displayEssayDate(essay) }}</span>
+                                    <strong>{{ essayDisplayTitle(essay) }}</strong>
+                                </button>
+                            </div>
+                        </article>
+
+                        <article class="activity-card">
+                            <div class="activity-head">
+                                <h3>{{ locale === 'zh' ? '最近会话' : 'Recent Sessions' }}</h3>
+                            </div>
+                            <div v-if="!insightRecentSessions.length" class="empty-copy">{{ t('chat.emptySessions') }}</div>
+                            <div v-else class="activity-list">
+                                <button v-for="session in insightRecentSessions" :key="session.session_id" class="activity-entry" @click="loadSession(session.session_id)">
+                                    <span>{{ formatDate(session.updated_at) }}</span>
+                                    <strong>{{ sessionDisplayTitle(session) }}</strong>
+                                </button>
+                            </div>
+                        </article>
+                    </section>
+
+                    <section class="activity-card">
+                        <div class="activity-head">
+                            <h3>{{ locale === 'zh' ? '活跃轨迹' : 'Activity Arc' }}</h3>
+                        </div>
+                        <div v-if="!insightActivity.length" class="empty-copy">{{ locale === 'zh' ? '继续写作或对话，这里会逐渐形成节奏。' : 'Keep writing and reflecting. Your rhythm will appear here.' }}</div>
+                        <div v-else class="activity-sparkline">
+                            <article v-for="point in insightActivity" :key="point.date" class="sparkline-day">
+                                <div class="sparkline-bars">
+                                    <span class="sparkline-bar essays" :style="activityBarStyle(point.essays)"></span>
+                                    <span class="sparkline-bar sessions" :style="activityBarStyle(point.sessions)"></span>
+                                    <span class="sparkline-bar documents" :style="activityBarStyle(point.documents)"></span>
+                                </div>
+                                <small>{{ point.date.slice(5) }}</small>
+                            </article>
+                        </div>
+                    </section>
+                </section>
+
+                <section v-else-if="currentView === 'timeline'" class="psyche-canvas timeline-view stitch-timeline-grid">
+                    <div class="page-hero">
+                        <div>
+                            <h2>{{ t('nav.timeline') }}</h2>
+                            <p>{{ locale === 'zh' ? '把随笔、会话与知识更新串成一条连续轨迹。' : 'Trace essays, sessions, and knowledge updates as one continuous arc.' }}</p>
+                        </div>
+                    </div>
+                    <div class="bento-grid">
+                        <article class="bento-card stat-card">
+                            <p>{{ locale === 'zh' ? '事件总数' : 'Events' }}</p>
+                            <strong>{{ timelineEventCount }}</strong>
+                        </article>
+                        <article class="bento-card stat-card">
+                            <p>{{ locale === 'zh' ? '活跃日期' : 'Active Days' }}</p>
+                            <strong>{{ timelineDayCount }}</strong>
+                        </article>
+                    </div>
+                    <section class="activity-card">
+                        <div v-if="timelineLoading" class="empty-copy">{{ t('common.loading') }}</div>
+                        <div v-else-if="!timelineGroups.length" class="empty-copy">{{ locale === 'zh' ? '还没有时间线事件。' : 'No timeline events yet.' }}</div>
+                        <div v-else class="timeline-stack">
+                            <article v-for="group in timelineGroups" :key="group.date" class="timeline-day">
+                                <div class="timeline-day-head">
+                                    <h3>{{ group.date }}</h3>
+                                    <span class="status-pill">{{ group.items.length }} {{ locale === 'zh' ? '个事件' : 'events' }}</span>
+                                </div>
+                                <button
+                                    v-for="item in group.items"
+                                    :key="`${group.date}-${item.kind}-${item.reference}`"
+                                    class="timeline-entry timeline-entry-button"
+                                    @click="openTimelineItem(item)"
+                                >
+                                    <div class="timeline-entry-meta">
+                                        <span class="status-pill">{{ timelineKindLabel(item.kind) }}</span>
+                                        <span>{{ formatDate(item.timestamp) }}</span>
+                                    </div>
+                                    <strong>{{ item.title }}</strong>
+                                    <p>{{ item.subtitle }}</p>
+                                    <span class="timeline-entry-cta">{{ timelineCtaLabel(item) }}</span>
+                                </button>
+                            </article>
+                        </div>
+                    </section>
+                </section>
+
+                <section v-else class="psyche-canvas settings-view stitch-settings-grid settings-sanctuary-grid">
                     <div class="page-hero compact-hero">
                         <div>
                             <h2>{{ t('settings.title') }}</h2>

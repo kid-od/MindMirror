@@ -2,11 +2,12 @@ import asyncio
 import json
 import os
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
 from agent import chat_with_agent, chat_with_agent_stream, storage
@@ -14,9 +15,19 @@ from auth import authenticate_user, create_access_token, get_current_user, get_d
 from document_loader import DocumentLoader
 from embedding import embedding_service
 try:
+    from activity_views import build_insights_payload, build_timeline_payload, list_public_document_activity
+except ModuleNotFoundError:
+    from backend.activity_views import build_insights_payload, build_timeline_payload, list_public_document_activity
+try:
     from essay_store import EssayStore
 except ModuleNotFoundError:
     from backend.essay_store import EssayStore
+try:
+    from document_previews import build_cover_url, delete_document_cover, ensure_document_cover, preview_cache_path
+except ModuleNotFoundError as exc:
+    if exc.name != "document_previews":
+        raise
+    from backend.document_previews import build_cover_url, delete_document_cover, ensure_document_cover, preview_cache_path
 from milvus_client import MilvusManager
 from milvus_writer import MilvusWriter
 from models import User
@@ -43,6 +54,7 @@ from schemas import (
     EssayDeleteResponse,
     EssayInfo,
     EssayListResponse,
+    InsightsResponse,
     LoginRequest,
     MessageInfo,
     RegisterRequest,
@@ -50,6 +62,7 @@ from schemas import (
     SessionInfo,
     SessionListResponse,
     SessionMessagesResponse,
+    TimelineResponse,
 )
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -235,6 +248,7 @@ def _process_uploaded_document_sync(
 
     parent_chunk_store.upsert_documents(parent_docs)
     milvus_writer.write_documents(leaf_docs, progress_callback=progress_callback)
+    ensure_document_cover(file_path, filename, metadata.get("file_type", new_docs[0].get("file_type", "")), DATA_DIR)
 
     emit("indexing", "正在整理索引并提交结果")
     emit("indexing", f"知识库写入完成，共 {len(leaf_docs)} 个叶子分块", state="completed")
@@ -392,6 +406,41 @@ async def daily_quote(
         return DailyQuoteResponse(**get_daily_quote(locale))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取每日一句失败: {str(e)}")
+
+
+@router.get("/insights", response_model=InsightsResponse)
+async def get_insights(current_user: User = Depends(get_current_user)):
+    essays = essay_store.list_by_owner(current_user.username)
+    sessions = storage.list_session_infos(current_user.username)
+    documents = list_public_document_activity() if current_user.role == "admin" else []
+    return InsightsResponse(**build_insights_payload(essays, sessions, documents))
+
+
+@router.get("/timeline", response_model=TimelineResponse)
+async def get_timeline(current_user: User = Depends(get_current_user)):
+    essays = essay_store.list_by_owner(current_user.username)
+    sessions = storage.list_session_infos(current_user.username)
+    documents = list_public_document_activity() if current_user.role == "admin" else []
+    return TimelineResponse(**build_timeline_payload(essays, sessions, documents))
+
+
+@router.get("/document-cover")
+async def get_document_cover(filename: str = Query(...), _: User = Depends(require_admin)):
+    try:
+        _validate_upload_filename(filename)
+        cover_path = preview_cache_path(filename, DATA_DIR)
+        if not cover_path.exists():
+            source_path = UPLOAD_DIR / filename
+            if not source_path.exists():
+                raise HTTPException(status_code=404, detail="文档封面不存在")
+            cover_path = ensure_document_cover(source_path, filename, source_path.suffix.lstrip(".").upper(), DATA_DIR)
+        if not cover_path or not cover_path.exists():
+            raise HTTPException(status_code=404, detail="文档封面不存在")
+        return FileResponse(cover_path, media_type="image/png")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"获取文档封面失败: {exc}") from exc
 
 
 @router.get("/sessions/{session_id}", response_model=SessionMessagesResponse)
@@ -719,7 +768,22 @@ async def list_documents(_: User = Depends(require_admin)):
                 }
             file_stats[filename]["chunk_count"] += 1
 
-        documents = [DocumentInfo(**stats) for _, stats in sorted(file_stats.items(), key=lambda pair: pair[0].lower())]
+        documents: list[DocumentInfo] = []
+        for _, stats in sorted(file_stats.items(), key=lambda pair: pair[0].lower()):
+            filename = stats.get("filename", "")
+            source_path = UPLOAD_DIR / filename
+            if source_path.exists():
+                stats["uploaded_at"] = datetime.fromtimestamp(source_path.stat().st_mtime).isoformat()
+                cover_path = ensure_document_cover(source_path, filename, stats.get("file_type", ""), DATA_DIR)
+            else:
+                cover_path = preview_cache_path(filename, DATA_DIR)
+
+            if cover_path and cover_path.exists():
+                stats["cover_url"] = build_cover_url(filename, int(cover_path.stat().st_mtime))
+            else:
+                stats["cover_url"] = None
+
+            documents.append(DocumentInfo(**stats))
         return DocumentListResponse(documents=documents)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取文档列表失败: {str(e)}")
@@ -944,6 +1008,7 @@ async def delete_document(filename: str, _: User = Depends(require_admin)):
         _remove_bm25_stats(knowledge_milvus_manager, delete_expr)
         result = knowledge_milvus_manager.delete(delete_expr)
         _delete_parent_chunks_for_scope(filename, _build_scope_metadata("public", "", "knowledge_base"))
+        delete_document_cover(filename, DATA_DIR)
 
         return DocumentDeleteResponse(
             filename=filename,

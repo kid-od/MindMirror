@@ -1,5 +1,6 @@
 """Milvus 客户端 - 支持密集向量+稀疏向量混合检索"""
 import os
+import time
 from dotenv import load_dotenv
 from pymilvus import MilvusClient, DataType, AnnSearchRequest, RRFRanker
 from pymilvus.exceptions import MilvusException
@@ -9,6 +10,7 @@ load_dotenv()
 # Milvus 单次 query 的 limit 上限（超出会报 invalid max query result window）
 QUERY_MAX_LIMIT = 16384
 DEFAULT_CONSISTENCY_LEVEL = "Strong"
+DEFAULT_CLIENT_MAX_IDLE_SECONDS = float(os.getenv("MILVUS_CLIENT_MAX_IDLE_SECONDS", "300"))
 
 
 class MilvusManager:
@@ -20,20 +22,47 @@ class MilvusManager:
         self.collection_name = collection_name or os.getenv("MILVUS_COLLECTION", "embeddings_collection")
         self.uri = f"http://{self.host}:{self.port}"
         self.client = None
+        self.client_last_used_at: float | None = None
+        self.client_max_idle_seconds = DEFAULT_CLIENT_MAX_IDLE_SECONDS
+
+    def _close_client(self, client: MilvusClient | None) -> None:
+        if client is None:
+            return
+        close = getattr(client, "close", None)
+        if callable(close):
+            try:
+                close()
+            except Exception:
+                pass
+
+    def _client_is_idle(self) -> bool:
+        if self.client is None or self.client_last_used_at is None:
+            return False
+        if self.client_max_idle_seconds <= 0:
+            return False
+        return (time.monotonic() - self.client_last_used_at) >= self.client_max_idle_seconds
 
     def _get_client(self) -> MilvusClient:
         # Lazy-create client to avoid blocking app import/startup when Milvus is temporarily unavailable.
+        if self._client_is_idle():
+            self._reset_client()
         if self.client is None:
             self.client = MilvusClient(uri=self.uri)
         return self.client
 
+    def _mark_client_used(self) -> None:
+        self.client_last_used_at = time.monotonic()
+
     def _reset_client(self) -> None:
+        stale_client = self.client
         self.client = None
+        self.client_last_used_at = None
+        self._close_client(stale_client)
 
     @staticmethod
     def _is_stale_connection_error(exc: Exception) -> bool:
         message = str(exc).lower()
-        return isinstance(exc, MilvusException) and (
+        return (
             "closed channel" in message
             or "channel closed" in message
             or "failed to connect" in message
@@ -42,13 +71,17 @@ class MilvusManager:
     def _call_with_reconnect(self, operation):
         client = self._get_client()
         try:
-            return operation(client)
+            result = operation(client)
+            self._mark_client_used()
+            return result
         except Exception as exc:
             if not self._is_stale_connection_error(exc):
                 raise
             self._reset_client()
             client = self._get_client()
-            return operation(client)
+            result = operation(client)
+            self._mark_client_used()
+            return result
 
     def _flush_collection(self) -> None:
         def operation(client):

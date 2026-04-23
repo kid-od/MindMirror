@@ -10,8 +10,8 @@ class FrontendChatUiLayoutTest(unittest.TestCase):
     def test_chat_shell_uses_viewport_height_and_internal_scrolling(self):
         css = (ROOT / "frontend" / "style.css").read_text(encoding="utf-8")
 
-        self.assertRegex(css, r"\.psyche-shell\s*\{[^}]*height:\s*100vh", re.S)
-        self.assertRegex(css, r"\.psyche-main\s*\{[^}]*height:\s*100vh", re.S)
+        self.assertRegex(css, r"\.psyche-shell\s*\{[^}]*height:\s*100vh;[^}]*height:\s*100dvh", re.S)
+        self.assertRegex(css, r"\.psyche-main\s*\{[^}]*height:\s*100vh;[^}]*height:\s*100dvh", re.S)
         self.assertRegex(css, r"\.psyche-main\s*\{[^}]*overflow:\s*hidden", re.S)
         self.assertRegex(css, r"\.deep-chat-messages\s*\{[^}]*overflow-y:\s*auto", re.S)
 
@@ -29,10 +29,13 @@ class FrontendChatUiLayoutTest(unittest.TestCase):
     def test_chat_column_is_centered_and_readable(self):
         css = (ROOT / "frontend" / "style.css").read_text(encoding="utf-8")
 
-        self.assertRegex(css, r"\.stitch-chat-layout\s*\{[^}]*grid-template-columns:\s*minmax\(220px,\s*280px\)\s*minmax\(0,\s*1fr\)", re.S)
-        self.assertRegex(css, r"\.stitch-chat-layout\s*\{[^}]*align-items:\s*stretch", re.S)
-        self.assertRegex(css, r"\.user-bubble\s*\{[^}]*max-width:\s*min\(760px,\s*78%\)", re.S)
-        self.assertRegex(css, r"\.curator-card\s*\{[^}]*max-width:\s*min\(1180px,\s*100%\)", re.S)
+        self.assertRegex(
+            css,
+            r"\.psyche-chat-layout,\s*\.stitch-chat-layout\s*\{[^}]*grid-template-columns:\s*minmax\(220px,\s*280px\)\s*minmax\(0,\s*1fr\)[^}]*align-items:\s*stretch[^}]*max-width:\s*var\(--chat-layout-max-width\)[^}]*margin-inline:\s*auto",
+            re.S,
+        )
+        self.assertRegex(css, r"\.user-bubble\s*\{[^}]*max-width:\s*min\(42rem,\s*78%\)", re.S)
+        self.assertRegex(css, r"\.curator-card\s*\{[^}]*max-width:\s*min\(56rem,\s*100%\)", re.S)
 
     def test_chat_view_has_refined_message_and_composer_layers(self):
         css = (ROOT / "frontend" / "style.css").read_text(encoding="utf-8")
@@ -46,8 +49,54 @@ class FrontendChatUiLayoutTest(unittest.TestCase):
     def test_chat_layout_stretches_rows_and_keeps_composer_out_of_overlap(self):
         css = (ROOT / "frontend" / "style.css").read_text(encoding="utf-8")
 
-        self.assertRegex(css, r"\.stitch-chat-layout\s*\{[^}]*align-items:\s*stretch", re.S)
+        self.assertRegex(css, r"\.psyche-chat-layout,\s*\.stitch-chat-layout\s*\{[^}]*align-items:\s*stretch", re.S)
         self.assertRegex(css, r"\.deep-input-area\s*\{[^}]*flex:\s*0\s+0\s+auto", re.S)
+
+    def test_chat_states_share_one_stable_message_window_size(self):
+        css = (ROOT / "frontend" / "style.css").read_text(encoding="utf-8")
+
+        self.assertIn("--chat-message-window-width: 56rem;", css)
+        self.assertRegex(css, r"--chat-message-window-min-height:\s*clamp\(11rem,\s*24vh,\s*16rem\);", re.S)
+        self.assertRegex(css, r"\.deep-chat\s*\{[^}]*grid-template-rows:\s*auto\s+minmax\(0,\s*1fr\)\s+auto", re.S)
+        self.assertRegex(css, r"\.deep-chat-messages\s*\{[^}]*flex:\s*1\s+1\s+0[^}]*min-height:\s*0", re.S)
+        self.assertRegex(css, r"\.curator-welcome,\s*\.curator-card\s*\{[^}]*width:\s*min\(100%,\s*var\(--chat-message-window-width\)\)[^}]*min-height:\s*var\(--chat-message-window-min-height\)", re.S)
+        self.assertRegex(css, r"\.thinking-text,\s*\.markdown-body\s*\{[^}]*min-height:\s*var\(--chat-message-body-min-height\)", re.S)
+
+    def test_secondary_controls_share_one_hover_language(self):
+        css = (ROOT / "frontend" / "style.css").read_text(encoding="utf-8")
+
+        self.assertRegex(
+            css,
+            r"\.ghost-auth,\s*"
+            r"\.psyche-logout,\s*"
+            r"\.ghost-action,\s*"
+            r"\.activity-head button,\s*"
+            r"\.essay-card-footer button,\s*"
+            r"\.reflection-chip,\s*"
+            r"\.reflection-session,\s*"
+            r"\.psyche-nav-item,\s*"
+            r"\.analysis-chip-row button\s*\{[^}]*"
+            r"transition:\s*[^}]*transform var\(--calm-motion\)[^}]*"
+            r"border-color var\(--calm-motion\)",
+            re.S,
+        )
+        self.assertRegex(
+            css,
+            r"\.ghost-auth:hover,\s*"
+            r"\.psyche-logout:hover,\s*"
+            r"\.ghost-action:hover,\s*"
+            r"\.activity-head button:hover,\s*"
+            r"\.essay-card-footer button:hover,\s*"
+            r"\.reflection-chip:hover,\s*"
+            r"\.analysis-chip-row button:hover,\s*"
+            r"\.psyche-nav-item:not\(\.active\):hover,\s*"
+            r"\.reflection-session:not\(\.active\):hover\s*\{[^}]*"
+            r"transform:\s*translateY\(-1px\);[^}]*"
+            r"background:\s*var\(--primary\);[^}]*"
+            r"color:\s*var\(--surface-container-lowest\);[^}]*"
+            r"border-color:\s*var\(--primary\)",
+            re.S,
+        )
 
     def test_theme_palette_matches_clinical_void_neutrals(self):
         css = (ROOT / "frontend" / "style.css").read_text(encoding="utf-8")

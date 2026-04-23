@@ -129,6 +129,7 @@ class DocumentInfo(BaseModel):
     file_type: str
     chunk_count: int
     uploaded_at: Optional[str] = None
+    cover_url: Optional[str] = None
 
 
 class DocumentListResponse(BaseModel):
@@ -165,3 +166,46 @@ class EssayDeleteResponse(BaseModel):
     filename: str
     chunks_deleted: int
     message: str
+
+
+class InsightTotals(BaseModel):
+    essays: int
+    sessions: int
+    documents: int
+
+
+class InsightTheme(BaseModel):
+    label: str
+    count: int
+
+
+class ActivityPoint(BaseModel):
+    date: str
+    essays: int
+    sessions: int
+    documents: int
+
+
+class InsightsResponse(BaseModel):
+    totals: InsightTotals
+    top_themes: List[InsightTheme]
+    activity: List[ActivityPoint]
+    recent_essays: List[EssayInfo]
+    recent_sessions: List[SessionInfo]
+
+
+class TimelineEvent(BaseModel):
+    kind: str
+    timestamp: str
+    title: str
+    subtitle: str
+    reference: Optional[str] = None
+
+
+class TimelineGroup(BaseModel):
+    date: str
+    items: List[TimelineEvent]
+
+
+class TimelineResponse(BaseModel):
+    groups: List[TimelineGroup]
