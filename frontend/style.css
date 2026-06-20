@@ -1,34 +1,35 @@
+/* 视觉令牌：集中定义页面色彩、阴影、间距和固定布局尺寸。 */
 :root {
-    --stitch-bg: #f5efe5;
-    --stitch-surface: rgba(255, 251, 246, 0.84);
-    --stitch-surface-strong: #fffdfa;
-    --stitch-sage: #7e927d;
-    --stitch-blue: #8ca0b7;
-    --stitch-lavender: #c0b2cf;
-    --stitch-ink: #241d18;
-    --stitch-muted: #75695f;
+    --stitch-bg: #eee8dc;
+    --stitch-surface: rgba(252, 249, 241, 0.9);
+    --stitch-surface-strong: #fffdf8;
+    --stitch-sage: #91a694;
+    --stitch-blue: #9bb8ad;
+    --stitch-lavender: #d4c3b4;
+    --stitch-ink: #25332f;
+    --stitch-muted: #6d7b72;
     --stitch-radius-xl: 2rem;
     --stitch-radius-lg: 1.5rem;
-    --primary: #000000;
-    --primary-dim: #1b1b1b;
-    --primary-container: #3b3b3b;
-    --secondary-container: #f0f0f0;
-    --tertiary: #474747;
-    --tertiary-dim: #2e2e2e;
-    --tertiary-fixed: #d9d9d9;
-    --surface: #f9f9f9;
-    --surface-container-lowest: #ffffff;
-    --surface-container-low: #f3f3f3;
-    --surface-container: #efefef;
-    --surface-container-high: #e8e8e8;
-    --surface-container-highest: #e2e2e2;
-    --on-primary: #e2e2e2;
-    --on-surface: #1b1b1b;
-    --on-surface-variant: #474747;
-    --outline-variant: #c6c6c6;
-    --ghost-border: rgba(198, 198, 198, 0.2);
-    --ambient-shadow: 0 24px 60px rgba(0, 0, 0, 0.045);
-    --soft-shadow: 0 12px 30px rgba(0, 0, 0, 0.03);
+    --primary: #25443c;
+    --primary-dim: #1a342f;
+    --primary-container: #4f6f61;
+    --secondary-container: #eff4ec;
+    --tertiary: #927b67;
+    --tertiary-dim: #725f50;
+    --tertiary-fixed: #eadfce;
+    --surface: #f8f4ec;
+    --surface-container-lowest: #fffdf8;
+    --surface-container-low: #f6f1e8;
+    --surface-container: #f0eadf;
+    --surface-container-high: #e7e8dc;
+    --surface-container-highest: #dce3d5;
+    --on-primary: #fffaf0;
+    --on-surface: #25332f;
+    --on-surface-variant: #68766e;
+    --outline-variant: #d6dccf;
+    --ghost-border: rgba(67, 84, 73, 0.13);
+    --ambient-shadow: 0 24px 60px rgba(52, 69, 58, 0.08);
+    --soft-shadow: 0 12px 30px rgba(52, 69, 58, 0.06);
     --calm-motion: 420ms cubic-bezier(0.4, 0, 0.2, 1);
     --layout-max-width: 80rem;
     --chat-layout-max-width: 92rem;
@@ -39,13 +40,13 @@
     --canvas-padding-block: clamp(1.5rem, 3vw, 3rem);
     --card-radius: 1.25rem;
     --card-radius-lg: 1.75rem;
-    --chat-shell-stable-height: clamp(36rem, calc(100dvh - 12rem), 54rem);
-    --chat-message-window-width: 56rem;
-    --chat-message-window-min-height: clamp(11rem, 24vh, 16rem);
-    --chat-message-body-min-height: clamp(4.75rem, 12vh, 7.5rem);
-    --essay-ink: #111111;
-    --essay-muted: rgba(17, 17, 17, 0.64);
-    --essay-line: rgba(17, 17, 17, 0.12);
+    --chat-shell-stable-height: clamp(34rem, calc(100dvh - var(--topbar-height) - var(--canvas-padding-block) - var(--canvas-padding-block) - 1rem), 48rem);
+    --chat-message-window-width: 58rem;
+    --chat-message-window-min-height: 0;
+    --chat-message-body-min-height: 0;
+    --essay-ink: #26352f;
+    --essay-muted: rgba(38, 53, 47, 0.68);
+    --essay-line: rgba(67, 84, 73, 0.14);
 }
 
 * {
@@ -65,9 +66,11 @@ body {
     color: var(--stitch-ink);
     font-family: "Manrope", "PingFang SC", "Microsoft YaHei", sans-serif;
     background:
-        radial-gradient(circle at top right, rgba(140, 160, 183, 0.24), transparent 28%),
-        radial-gradient(circle at bottom left, rgba(126, 146, 125, 0.18), transparent 24%),
-        linear-gradient(180deg, #f8f2ea 0%, var(--stitch-bg) 46%, #efe7dc 100%);
+        radial-gradient(circle at top right, rgba(145, 166, 148, 0.24), transparent 30%),
+        radial-gradient(circle at bottom left, rgba(212, 195, 180, 0.28), transparent 28%),
+        linear-gradient(180deg, #fbf7ef 0%, var(--stitch-bg) 48%, #e9dfd0 100%);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
 }
 
 body::before {
@@ -76,8 +79,8 @@ body::before {
     inset: 0;
     pointer-events: none;
     background:
-        linear-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+        linear-gradient(rgba(71, 92, 75, 0.026) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(71, 92, 75, 0.026) 1px, transparent 1px);
     background-size: 3rem 3rem;
     mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.22), transparent 78%);
 }
@@ -116,6 +119,7 @@ button {
     background: none;
     color: inherit;
     cursor: pointer;
+    touch-action: manipulation;
 }
 
 button:disabled {
@@ -140,6 +144,7 @@ a {
 }
 
 .app-icon {
+    /* 本项目不依赖外部图标字体，所有图标通过 CSS mask 内联 SVG 渲染。 */
     --icon-size: 1.35rem;
     display: inline-flex;
     width: var(--icon-size);
@@ -204,6 +209,10 @@ a {
     --app-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 5h5v14H5zM10 5h5v14h-5z'/%3E%3Cpath d='M17 8v8M13 12h8'/%3E%3C/svg%3E");
 }
 
+.app-icon-lock {
+    --app-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='10' width='14' height='10' rx='2'/%3E%3Cpath d='M8 10V7a4 4 0 0 1 8 0v3'/%3E%3Cpath d='M12 14v2'/%3E%3C/svg%3E");
+}
+
 .app-icon-menu-book {
     --app-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5.5c2.8 0 5 .6 8 2.5v12c-3-1.9-5.2-2.5-8-2.5z'/%3E%3Cpath d='M20 5.5c-2.8 0-5 .6-8 2.5v12c3-1.9 5.2-2.5 8-2.5z'/%3E%3C/svg%3E");
 }
@@ -230,6 +239,10 @@ a {
 
 .app-icon-send {
     --app-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpath d='M3 20l18-8L3 4v6l10 2-10 2z'/%3E%3C/svg%3E");
+}
+
+.app-icon-shield-check {
+    --app-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l7 3v5c0 4.6-2.8 8.2-7 10-4.2-1.8-7-5.4-7-10V6z'/%3E%3Cpath d='M9 12l2 2 4-4'/%3E%3C/svg%3E");
 }
 
 .app-icon-settings {
@@ -286,29 +299,80 @@ a {
 
 .auth-screen {
     display: grid;
+    height: 100vh;
+    height: 100dvh;
     min-height: 100vh;
     min-height: 100dvh;
     place-items: center;
     padding: clamp(1.25rem, 4vw, 2.5rem);
+    overflow-y: auto;
 }
 
 .stitch-landing-shell {
-    align-items: stretch;
+    align-items: center;
     grid-template-columns: minmax(0, 1.15fr) minmax(20rem, 30rem);
     gap: clamp(1.5rem, 3vw, 2.5rem);
-    place-items: stretch;
+    place-items: center stretch;
+}
+
+.auth-command-center {
+    width: min(100%, 76rem);
+    margin-inline: auto;
+    grid-template-columns: minmax(0, 1.05fr) minmax(22rem, 30rem);
+}
+
+.stitch-landing-hero,
+.auth-panel {
+    min-height: clamp(28rem, min(68dvh, 44rem), 44rem);
 }
 
 .stitch-landing-hero {
     display: grid;
     align-content: center;
-    gap: 1.5rem;
+    gap: 1.35rem;
     padding: clamp(2rem, 6vw, 4rem);
     border: 1px solid rgba(36, 29, 24, 0.08);
     border-radius: var(--stitch-radius-xl);
-    background: linear-gradient(180deg, rgba(255, 253, 250, 0.78), rgba(248, 242, 234, 0.62));
+    background: rgba(255, 253, 250, 0.82);
     box-shadow: 0 24px 60px rgba(68, 52, 40, 0.08);
     backdrop-filter: blur(16px);
+}
+
+.auth-preview-panel {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.auth-preview-card {
+    display: grid;
+    min-height: 8.5rem;
+    align-content: space-between;
+    gap: 0.9rem;
+    padding: 1rem;
+    border: 1px solid rgba(17, 17, 17, 0.09);
+    border-radius: var(--card-radius);
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: var(--soft-shadow);
+}
+
+.auth-preview-card.active {
+    background: var(--primary);
+    color: var(--surface-container-lowest);
+}
+
+.auth-preview-card .app-icon {
+    --icon-size: 1.5rem;
+}
+
+.auth-preview-card strong {
+    font-size: 0.95rem;
+}
+
+.auth-preview-card small {
+    color: currentColor;
+    opacity: 0.68;
 }
 
 .landing-stat-strip {
@@ -372,7 +436,10 @@ a {
 .auth-panel {
     position: relative;
     width: min(100%, 42rem);
-    padding: clamp(2rem, 5vw, 3.25rem);
+    display: grid;
+    align-content: center;
+    gap: 1.35rem;
+    padding: clamp(1.75rem, 4vw, 2.35rem);
     overflow: hidden;
     border: 1px solid var(--ghost-border);
     border-radius: 1.5rem;
@@ -384,7 +451,7 @@ a {
 .stitch-auth-card {
     width: min(100%, 30rem);
     border-radius: var(--stitch-radius-xl);
-    background: var(--stitch-surface);
+    background: rgba(255, 255, 255, 0.86);
 }
 
 .auth-glow {
@@ -412,7 +479,6 @@ a {
 .auth-brand {
     position: relative;
     gap: 1rem;
-    margin-bottom: 2rem;
     z-index: 1;
 }
 
@@ -427,22 +493,69 @@ a {
 
 .auth-brand h1 {
     font-size: clamp(2.25rem, 6vw, 3.6rem);
-    line-height: 0.95;
-    letter-spacing: -0.04em;
+    line-height: 1.04;
+    letter-spacing: 0;
 }
 
 .auth-copy {
     margin-top: 0.85rem;
-    max-width: 28rem;
+    max-width: 34rem;
     color: var(--stitch-muted);
     line-height: 1.7;
+}
+
+.auth-form-header {
+    position: relative;
+    display: grid;
+    gap: 0.65rem;
+    z-index: 1;
+}
+
+.auth-form-header h2 {
+    font-size: clamp(1.7rem, 4vw, 2.25rem);
+    line-height: 1.05;
+}
+
+.auth-form-header p {
+    color: var(--stitch-muted);
+    line-height: 1.6;
 }
 
 .auth-fields {
     position: relative;
     display: grid;
-    gap: 0.9rem;
+    gap: 1rem;
     z-index: 1;
+}
+
+.auth-field {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.auth-field-label {
+    color: var(--on-surface-variant);
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.auth-field-control {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    min-height: 3.7rem;
+    padding: 0 0.95rem;
+    border: 1px solid var(--ghost-border);
+    border-radius: 0.95rem;
+    background: var(--surface-container-low);
+    color: var(--on-surface);
+    transition: background var(--calm-motion), box-shadow var(--calm-motion), border-color var(--calm-motion);
+}
+
+.auth-field-control .app-icon {
+    --icon-size: 1.2rem;
+    margin-right: 0.75rem;
+    color: var(--on-surface-variant);
 }
 
 .auth-fields input,
@@ -456,14 +569,13 @@ a {
 
 .auth-fields input,
 .auth-fields select {
-    min-height: 3.6rem;
-    padding: 0 1rem;
-    border: 1px solid var(--ghost-border);
-    border-radius: 0.85rem;
+    width: 100%;
+    min-height: 3rem;
+    padding: 0;
+    background: transparent;
 }
 
-.auth-fields input:focus,
-.auth-fields select:focus,
+.auth-field-control:focus-within,
 .psyche-search:focus-within,
 .deep-input-area textarea:focus {
     background: var(--surface-container-lowest);
@@ -478,12 +590,12 @@ a {
     gap: 0.625rem;
     min-height: 3.5rem;
     padding: 0 1.4rem;
-    border: 1px solid #111111;
-    border-radius: 0.85rem;
+    border: 1px solid rgba(37, 68, 60, 0.14);
+    border-radius: 1rem;
     background: linear-gradient(135deg, var(--primary), var(--primary-container));
     color: var(--on-primary);
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
-    font-weight: 800;
+    box-shadow: 0 14px 30px rgba(37, 68, 60, 0.18);
+    font-weight: 750;
 }
 
 .stitch-primary:hover,
@@ -493,6 +605,7 @@ a {
 
 .auth-submit {
     min-height: 3.8rem;
+    justify-content: space-between;
 }
 
 .ghost-auth,
@@ -524,9 +637,9 @@ a {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    border: 1px solid rgba(17, 17, 17, 0.08);
-    border-radius: 0.85rem;
-    background: var(--surface-container-high);
+    border: 1px solid rgba(67, 84, 73, 0.14);
+    border-radius: 1rem;
+    background: rgba(255, 253, 248, 0.74);
     color: var(--on-surface);
 }
 
@@ -547,9 +660,9 @@ a {
 .psyche-nav-item:not(.active):hover,
 .reflection-session:not(.active):hover {
     transform: translateY(-1px);
-    background: var(--primary);
-    color: var(--surface-container-lowest);
-    border-color: var(--primary);
+    background: var(--secondary-container);
+    color: var(--primary);
+    border-color: rgba(37, 68, 60, 0.22);
     box-shadow: var(--soft-shadow);
 }
 
@@ -782,15 +895,15 @@ a {
 }
 
 .sparkline-bar.essays {
-    background: linear-gradient(180deg, #111111, #474747);
+    background: linear-gradient(180deg, #6f8b75, #27483f);
 }
 
 .sparkline-bar.sessions {
-    background: linear-gradient(180deg, var(--stitch-blue), #5f7389);
+    background: linear-gradient(180deg, var(--stitch-blue), #6c897e);
 }
 
 .sparkline-bar.documents {
-    background: linear-gradient(180deg, var(--stitch-sage), #60725f);
+    background: linear-gradient(180deg, var(--stitch-lavender), #927b67);
 }
 
 .psyche-sidebar {
@@ -812,7 +925,7 @@ a {
 .psyche-brand h1 {
     font-size: 1.55rem;
     line-height: 1;
-    letter-spacing: -0.04em;
+    letter-spacing: 0;
 }
 
 .psyche-brand p {
@@ -912,8 +1025,10 @@ a {
     max-width: 30rem;
     min-height: 3.1rem;
     padding: 0 1rem;
-    border: 1px solid var(--ghost-border);
+    border: 1px solid rgba(67, 84, 73, 0.13);
     border-radius: 999px;
+    background: rgba(255, 253, 248, 0.78);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
 }
 
 .psyche-search input {
@@ -941,7 +1056,9 @@ a {
 .stitch-chat-layout {
     flex: 1;
     min-height: 0;
-    overflow: auto;
+    height: calc(100vh - var(--topbar-height));
+    height: calc(100dvh - var(--topbar-height));
+    overflow: hidden;
     display: grid;
     grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
     align-items: stretch;
@@ -1012,9 +1129,10 @@ a {
 }
 
 .page-hero h2 {
-    font-size: clamp(2.8rem, 5vw, 4.5rem);
-    line-height: 0.94;
-    letter-spacing: -0.05em;
+    font-size: clamp(2.55rem, 4.6vw, 4.05rem);
+    line-height: 1.02;
+    letter-spacing: 0;
+    color: var(--on-surface);
 }
 
 .page-hero p {
@@ -1082,7 +1200,7 @@ a {
     color: var(--on-surface);
     font-size: clamp(1.9rem, 3.5vw, 3.2rem);
     line-height: 1.12;
-    letter-spacing: -0.04em;
+    letter-spacing: 0;
 }
 
 .quote-card p {
@@ -1122,7 +1240,7 @@ a {
 
 .bento-card strong {
     font-size: clamp(2rem, 4vw, 3.25rem);
-    letter-spacing: -0.05em;
+    letter-spacing: 0;
 }
 
 .card-title {
@@ -1136,7 +1254,7 @@ a {
 .essay-card h3,
 .reflection-list h2,
 .deep-chat-header h2 {
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
 }
 
 .card-icon {
@@ -1310,7 +1428,7 @@ a {
 
 .upload-dropzone h3 {
     font-size: 1.45rem;
-    letter-spacing: -0.03em;
+    letter-spacing: 0;
 }
 
 .upload-dropzone p,
@@ -1467,16 +1585,79 @@ a {
 
 .restricted-card h2,
 .empty-garden h3 {
-    letter-spacing: -0.03em;
+    letter-spacing: 0;
+}
+
+.essays-view .page-hero {
+    align-items: center;
+    padding: clamp(1.4rem, 3vw, 2.4rem);
+    border: 1px solid rgba(67, 84, 73, 0.11);
+    border-radius: 1.75rem;
+    background:
+        radial-gradient(circle at 88% 18%, rgba(145, 166, 148, 0.28), transparent 28%),
+        radial-gradient(circle at 10% 95%, rgba(212, 195, 180, 0.26), transparent 32%),
+        linear-gradient(135deg, #fffdf8 0%, #f4efe4 100%);
+    box-shadow: 0 24px 54px rgba(52, 69, 58, 0.08);
+}
+
+.essays-view .page-hero h2 {
+    color: var(--essay-ink);
+    font-size: clamp(2.25rem, 4.4vw, 3.95rem);
+    line-height: 1.05;
+    letter-spacing: 0;
+}
+
+.essays-view .page-hero p {
+    max-width: 42rem;
+    color: var(--essay-muted);
+    font-size: 1rem;
+}
+
+.essays-view .stitch-primary {
+    border-color: rgba(37, 68, 60, 0.18);
+    background: linear-gradient(135deg, #27483f, #6f8b75);
+    color: #fffaf0;
+    box-shadow: 0 16px 34px rgba(37, 68, 60, 0.2);
+}
+
+.reflection-archive-grid .essay-grid,
+.essay-grid {
+    gap: 1.15rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
 }
 
 .essays-view .stitch-upload-status,
 .essays-view .empty-garden,
 .essay-card,
 .essay-card.featured {
-    background: #ffffff;
-    border: 1px solid var(--essay-line);
-    box-shadow: 0 18px 40px rgba(17, 17, 17, 0.05);
+    border: 1px solid rgba(67, 84, 73, 0.12);
+    background:
+        linear-gradient(180deg, rgba(255, 253, 248, 0.96), rgba(250, 246, 236, 0.95));
+    box-shadow: 0 18px 40px rgba(52, 69, 58, 0.07);
+}
+
+.essay-card {
+    position: relative;
+    min-height: clamp(16.5rem, 23vw, 20rem);
+    overflow: hidden;
+    border-radius: 1.55rem;
+}
+
+.essay-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 0.35rem;
+    background: linear-gradient(90deg, #91a694, #d4c3b4);
+    opacity: 0.75;
+}
+
+.essay-card.featured {
+    grid-column: span 2;
+    min-height: clamp(17.5rem, 24vw, 21rem);
+    background:
+        radial-gradient(circle at 100% 0%, rgba(145, 166, 148, 0.16), transparent 30%),
+        linear-gradient(135deg, rgba(255, 253, 248, 0.98), rgba(245, 239, 228, 0.98));
 }
 
 .essay-card h3,
@@ -1484,6 +1665,12 @@ a {
 .essay-meta,
 .essay-card-footer {
     color: var(--essay-ink);
+}
+
+.essay-card h3 {
+    font-size: clamp(1.45rem, 2vw, 2.05rem);
+    line-height: 1.22;
+    letter-spacing: 0;
 }
 
 .essay-card p,
@@ -1497,30 +1684,41 @@ a {
 
 .essay-meta span,
 .essay-card .insight-chip {
-    background: #111111;
-    border-color: #111111;
-    color: #ffffff;
+    min-height: 2rem;
+    border-color: rgba(67, 84, 73, 0.12);
+    background: rgba(239, 244, 236, 0.86);
+    color: #35544a;
+    font-weight: 700;
+}
+
+.essay-meta span:last-child {
+    background: rgba(234, 223, 206, 0.78);
+    color: #715f4f;
+}
+
+.essay-card .insight-chip {
+    background: rgba(255, 253, 248, 0.76);
 }
 
 .essay-card-actions .ghost-action {
-    background: transparent;
+    background: rgba(255, 253, 248, 0.62);
     color: var(--essay-ink);
     border: 1px solid var(--essay-line);
 }
 
-.essay-card-actions button:not(.ghost-action),
-.essays-view .stitch-primary {
-    border: 1px solid #111111;
-    background: #111111;
-    color: #ffffff;
-    box-shadow: none;
+.essay-card-actions button:not(.ghost-action) {
+    border: 1px solid rgba(37, 68, 60, 0.14);
+    background: #27483f;
+    color: #fffaf0;
+    box-shadow: 0 12px 24px rgba(37, 68, 60, 0.14);
 }
 
 .essay-card-actions .ghost-action:hover,
 .essay-card-actions button:not(.ghost-action):hover,
 .essays-view .stitch-primary:hover {
-    background: #111111;
-    color: #ffffff;
+    border-color: rgba(37, 68, 60, 0.2);
+    background: #355b50;
+    color: #fffaf0;
 }
 
 .reflection-list {
@@ -1529,24 +1727,24 @@ a {
     height: var(--chat-shell-stable-height);
     max-height: var(--chat-shell-stable-height);
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.95rem;
     overflow: hidden;
-    padding: 1.25rem;
-    border: 1px solid var(--ghost-border);
-    border-radius: var(--card-radius);
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: var(--ambient-shadow);
+    padding: 1.15rem;
+    border: 1px solid rgba(67, 84, 73, 0.1);
+    border-radius: 1.55rem;
+    background: rgba(255, 253, 248, 0.72);
+    box-shadow: 0 18px 40px rgba(52, 69, 58, 0.055);
 }
 
 .reflection-list h2 {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
 }
 
 .reflection-section-label {
     font-size: 0.78rem;
     font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    letter-spacing: 0;
+    text-transform: none;
 }
 
 .reflection-actions {
@@ -1559,6 +1757,9 @@ a {
     width: 100%;
     justify-content: flex-start;
     padding: 0.7rem 0.95rem;
+    border-color: rgba(67, 84, 73, 0.12);
+    background: rgba(239, 244, 236, 0.72);
+    color: var(--on-surface);
     text-align: left;
 }
 
@@ -1584,9 +1785,9 @@ a {
     min-height: 54px;
     align-items: center;
     padding: 0.95rem 1rem;
-    border: 1px solid rgba(17, 17, 17, 0.08);
+    border: 1px solid rgba(67, 84, 73, 0.1);
     border-radius: 1rem;
-    background: #ffffff;
+    background: rgba(255, 253, 248, 0.72);
     box-shadow: none;
 }
 
@@ -1597,10 +1798,10 @@ a {
 }
 
 .reflection-session.active {
-    border-color: #111111;
-    background: #111111;
-    color: #ffffff;
-    box-shadow: none;
+    border-color: rgba(37, 68, 60, 0.22);
+    background: #27483f;
+    color: #fffaf0;
+    box-shadow: 0 10px 22px rgba(37, 68, 60, 0.12);
 }
 
 .session-delete {
@@ -1609,10 +1810,10 @@ a {
     align-self: center;
     width: 42px;
     height: 42px;
-    border: 1px solid rgba(17, 17, 17, 0.12);
+    border: 1px solid rgba(67, 84, 73, 0.14);
     border-radius: 14px;
-    background: #ffffff;
-    color: #111111;
+    background: #fffdf8;
+    color: var(--primary);
     box-shadow: none;
     opacity: 0;
     visibility: hidden;
@@ -1634,12 +1835,12 @@ a {
     height: var(--chat-shell-stable-height);
     max-height: var(--chat-shell-stable-height);
     overflow: hidden;
-    border: 1px solid var(--ghost-border);
-    border-radius: var(--card-radius-lg);
+    border: 1px solid rgba(67, 84, 73, 0.1);
+    border-radius: 1.85rem;
     background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 246, 246, 0.98)),
-        radial-gradient(circle at top right, rgba(0, 0, 0, 0.03), transparent 24%);
-    box-shadow: 0 28px 72px rgba(0, 0, 0, 0.055);
+        radial-gradient(circle at 92% 0%, rgba(145, 166, 148, 0.14), transparent 24%),
+        linear-gradient(180deg, rgba(255, 253, 248, 0.96), rgba(248, 244, 236, 0.98));
+    box-shadow: 0 28px 72px rgba(52, 69, 58, 0.07);
 }
 
 .deep-chat-header {
@@ -1647,9 +1848,9 @@ a {
     align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1.5rem 1.75rem;
-    border-bottom: 1px solid var(--ghost-border);
-    background: linear-gradient(180deg, rgba(243, 243, 243, 0.96), rgba(249, 249, 249, 0.35));
+    padding: 1.45rem 1.75rem 1.2rem;
+    border-bottom: 1px solid rgba(67, 84, 73, 0.09);
+    background: rgba(255, 253, 248, 0.68);
 }
 
 .deep-chat-header p {
@@ -1671,12 +1872,13 @@ a {
     flex: 1 1 0;
     min-height: 0;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.05rem;
     overflow-y: auto;
-    padding: 1.5rem 1.75rem 1.75rem;
+    padding: 1.55rem 1.75rem 1.75rem;
     background:
-        radial-gradient(circle at top right, rgba(0, 0, 0, 0.03), transparent 24%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(249, 249, 249, 0.92));
+        radial-gradient(circle at 10% 0%, rgba(212, 195, 180, 0.12), transparent 26%),
+        linear-gradient(180deg, rgba(255, 253, 248, 0.3), rgba(248, 244, 236, 0.9));
+    overscroll-behavior: contain;
     scrollbar-gutter: stable;
 }
 
@@ -1691,7 +1893,7 @@ a {
     flex-direction: column;
     justify-content: center;
     gap: 0.75rem;
-    margin-block: auto;
+    margin: clamp(1.25rem, 5vh, 3rem) auto 0;
     padding: clamp(1.5rem, 4vw, 3rem);
     text-align: left;
 }
@@ -1722,7 +1924,7 @@ a {
     border-radius: 1.125rem 1.125rem 0.3rem 1.125rem;
     background: linear-gradient(135deg, var(--primary), var(--primary-container));
     color: var(--on-primary);
-    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.14);
+    box-shadow: 0 16px 34px rgba(37, 68, 60, 0.16);
     line-height: 1.72;
 }
 
@@ -1730,25 +1932,30 @@ a {
     display: flex;
     max-width: min(56rem, 100%);
     flex-direction: column;
-    gap: 1rem;
-    padding: 1.35rem;
-    border: 1px solid var(--ghost-border);
+    gap: 0.95rem;
+    padding: 1.35rem 1.45rem;
+    border: 1px solid rgba(67, 84, 73, 0.08);
+    border-radius: 1.35rem;
+    background: rgba(255, 253, 248, 0.68);
+    box-shadow: none;
 }
 
 .curator-label {
     justify-content: flex-start;
     gap: 0.625rem;
     margin-bottom: 0;
+    color: rgba(38, 53, 47, 0.58);
+    font-size: 0.82rem;
 }
 
 .curator-label .app-icon-auto-awesome {
     --icon-size: 1rem;
-    width: 2rem;
-    height: 2rem;
-    padding: 0.5rem;
-    border-radius: 0.75rem;
-    background: linear-gradient(135deg, var(--primary), var(--primary-container));
-    color: var(--on-primary);
+    width: 1.85rem;
+    height: 1.85rem;
+    padding: 0.48rem;
+    border-radius: 999px;
+    background: rgba(239, 244, 236, 0.84);
+    color: var(--primary);
 }
 
 .thinking-text,
@@ -1758,9 +1965,10 @@ a {
 
 .markdown-body {
     display: grid;
-    gap: 1rem;
+    gap: 0.95rem;
     color: var(--on-surface);
-    line-height: 1.75;
+    font-size: 1.03rem;
+    line-height: 1.88;
 }
 
 .markdown-body > * {
@@ -1770,6 +1978,10 @@ a {
 .markdown-body ul,
 .markdown-body ol {
     padding-left: 1.25rem;
+}
+
+.markdown-body li + li {
+    margin-top: 0.45rem;
 }
 
 .markdown-body pre {
@@ -1785,7 +1997,7 @@ a {
 
 .markdown-body blockquote {
     padding-left: 1rem;
-    border-left: 3px solid rgba(17, 17, 17, 0.14);
+    border-left: 3px solid rgba(145, 166, 148, 0.42);
     color: var(--on-surface-variant);
 }
 
@@ -1795,31 +2007,64 @@ a {
     text-underline-offset: 0.2em;
 }
 
+.citation-drawer {
+    margin-top: 0.1rem;
+    border-top: 1px solid rgba(67, 84, 73, 0.09);
+    padding-top: 0.8rem;
+}
+
+.citation-drawer summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: rgba(38, 53, 47, 0.62);
+    cursor: pointer;
+    font-size: 0.86rem;
+    font-weight: 650;
+    list-style: none;
+}
+
+.citation-drawer summary::-webkit-details-marker {
+    display: none;
+}
+
 .citation-stack {
     display: grid;
-    gap: 0.75rem;
-    margin-top: 0;
+    gap: 0.55rem;
+    margin-top: 0.75rem;
 }
 
 .citation-card {
     display: flex;
-    gap: 0.875rem;
+    gap: 0.75rem;
     align-items: flex-start;
-    padding: 1rem;
-    border: 1px solid var(--ghost-border);
-    border-radius: 0.875rem;
-    background: var(--surface-container-low);
+    padding: 0.8rem 0.95rem;
+    border: 1px solid rgba(67, 84, 73, 0.08);
+    border-radius: 0.9rem;
+    background: rgba(246, 241, 232, 0.72);
 }
 
 .citation-card h4 {
-    margin-bottom: 0.35rem;
-    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+    color: rgba(38, 53, 47, 0.72);
+    font-size: 0.86rem;
+    line-height: 1.45;
+}
+
+.citation-card p {
+    color: rgba(38, 53, 47, 0.58);
+    font-size: 0.88rem;
+    line-height: 1.65;
 }
 
 .analysis-options {
     display: grid;
-    gap: 0.75rem;
-    margin-top: auto;
+    gap: 0.65rem;
+    margin-top: 0.2rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid rgba(67, 84, 73, 0.08);
+    color: rgba(38, 53, 47, 0.58);
+    font-size: 0.9rem;
 }
 
 .analysis-chip-row {
@@ -1829,9 +2074,12 @@ a {
 }
 
 .analysis-chip-row button {
-    min-height: 2.25rem;
+    min-height: 2.2rem;
     padding: 0 0.95rem;
-    font-weight: 600;
+    border-color: rgba(67, 84, 73, 0.12);
+    background: rgba(255, 253, 248, 0.62);
+    color: var(--primary);
+    font-weight: 650;
 }
 
 .deep-input-area {
@@ -1841,14 +2089,16 @@ a {
     gap: 0.875rem;
     align-items: center;
     padding: 1.25rem 1.75rem 1.5rem;
-    border-top: 1px solid var(--ghost-border);
-    background: linear-gradient(180deg, rgba(243, 243, 243, 0.7), rgba(249, 249, 249, 0.98));
-    box-shadow: 0 -14px 28px rgba(0, 0, 0, 0.03);
+    border-top: 1px solid rgba(67, 84, 73, 0.09);
+    background: rgba(255, 253, 248, 0.82);
+    box-shadow: 0 -14px 28px rgba(52, 69, 58, 0.035);
 }
 
 .deep-input-area textarea {
+    height: 66px;
     min-height: 66px;
-    max-height: 160px;
+    max-height: 66px;
+    overflow-y: hidden;
     resize: none;
     padding: 1rem 1.125rem;
     border: 1px solid var(--ghost-border);
@@ -1898,6 +2148,33 @@ a {
 @media (max-width: 980px) {
     body {
         overflow: auto;
+    }
+
+    .auth-screen {
+        height: auto;
+        min-height: 100vh;
+        min-height: 100dvh;
+        align-content: center;
+        padding-block: clamp(4rem, 8vw, 5rem) clamp(1.5rem, 5vw, 2.5rem);
+    }
+
+    .auth-command-center {
+        width: min(100%, 46rem);
+        grid-template-columns: 1fr;
+    }
+
+    .stitch-landing-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .stitch-landing-hero,
+    .auth-panel {
+        min-height: 0;
+    }
+
+    .auth-panel {
+        order: -1;
+        justify-self: center;
     }
 
     .psyche-shell {
@@ -1993,13 +2270,26 @@ a {
     }
 
     .deep-chat {
-        height: auto;
-        min-height: 34rem;
+        height: clamp(34rem, calc(100dvh - var(--topbar-height) - 5rem), 44rem);
+        min-height: clamp(34rem, calc(100dvh - var(--topbar-height) - 5rem), 44rem);
     }
 }
 
 @media (max-width: 720px) {
+    .auth-command-center {
+        grid-template-columns: 1fr;
+    }
+
     .stitch-landing-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .stitch-landing-hero,
+    .auth-panel {
+        min-height: 0;
+    }
+
+    .auth-preview-panel {
         grid-template-columns: 1fr;
     }
 
@@ -2050,5 +2340,929 @@ a {
 
     .send-reflection {
         width: 100%;
+    }
+}
+
+/* Immersive Focus: dark navigation rail, quiet reading canvas. */
+body {
+    background:
+        radial-gradient(circle at 84% 10%, rgba(127, 156, 177, 0.18), transparent 28%),
+        linear-gradient(135deg, #d9d7d2 0%, #eeeae3 48%, #d9e0e1 100%);
+}
+
+body::before {
+    background:
+        linear-gradient(rgba(21, 35, 42, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(21, 35, 42, 0.035) 1px, transparent 1px);
+    background-size: 3.5rem 3.5rem;
+}
+
+.auth-command-center {
+    width: min(100%, 76rem);
+    min-height: min(50rem, calc(100dvh - 5rem));
+    grid-template-columns: minmax(17rem, 21rem) minmax(0, 1fr);
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid rgba(21, 35, 42, 0.12);
+    border-radius: 2rem;
+    background: #ffffff;
+    box-shadow: 0 38px 96px rgba(21, 35, 42, 0.2);
+}
+
+.stitch-landing-hero,
+.auth-panel {
+    min-height: 100%;
+}
+
+.stitch-landing-hero {
+    align-content: start;
+    gap: 1.25rem;
+    padding: 2rem 1.5rem;
+    border: 0;
+    border-radius: 0;
+    background:
+        radial-gradient(circle at 20% 0%, rgba(127, 156, 177, 0.16), transparent 28%),
+        linear-gradient(180deg, #18272e, #111d23);
+    box-shadow: none;
+    color: var(--on-primary);
+}
+
+.stitch-auth-brand {
+    align-items: flex-start;
+}
+
+.stitch-auth-brand .auth-avatar {
+    width: 3.25rem;
+    height: 3.25rem;
+    border: 1px solid rgba(246, 242, 233, 0.16);
+    background: rgba(246, 242, 233, 0.08);
+    color: var(--on-primary);
+}
+
+.stitch-auth-brand .auth-kicker,
+.stitch-auth-brand .auth-copy {
+    color: rgba(246, 242, 233, 0.56);
+}
+
+.stitch-auth-brand h1 {
+    margin-top: 0.3rem;
+    color: #ffffff;
+    font-size: clamp(1.8rem, 3vw, 2.45rem);
+    line-height: 1.06;
+}
+
+.auth-preview-panel {
+    grid-template-columns: 1fr;
+    margin-top: 1.25rem;
+}
+
+.auth-preview-card {
+    min-height: 6rem;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    align-content: center;
+    padding: 1rem;
+    border-color: rgba(246, 242, 233, 0.09);
+    background: rgba(246, 242, 233, 0.045);
+    color: rgba(246, 242, 233, 0.72);
+    box-shadow: none;
+}
+
+.auth-preview-card.active {
+    border-color: rgba(184, 204, 185, 0.58);
+    background: rgba(145, 166, 148, 0.18);
+    color: #ffffff;
+    box-shadow: inset 3px 0 0 #b8ccb9;
+}
+
+.auth-preview-card .app-icon {
+    grid-row: 1 / 3;
+}
+
+.auth-preview-card strong,
+.auth-preview-card small {
+    grid-column: 2;
+}
+
+.auth-preview-card small {
+    margin-top: 0.2rem;
+}
+
+.auth-trust-rail {
+    margin-top: auto;
+}
+
+.auth-trust-rail .landing-stat-card {
+    padding: 1rem 0;
+    border: 0;
+    border-top: 1px solid rgba(246, 242, 233, 0.1);
+    border-radius: 0;
+    background: transparent;
+}
+
+.auth-trust-rail .landing-stat-card strong {
+    color: rgba(246, 242, 233, 0.88);
+}
+
+.auth-trust-rail .landing-stat-card span {
+    color: rgba(246, 242, 233, 0.48);
+    font-size: 0.82rem;
+}
+
+.stitch-auth-card {
+    width: 100%;
+    max-width: none;
+    justify-items: center;
+    align-content: center;
+    padding: clamp(2.5rem, 7vw, 6rem);
+    border: 0;
+    border-radius: 0;
+    background: #ffffff;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.stitch-auth-card .auth-form-header,
+.stitch-auth-card .auth-fields {
+    width: min(100%, 31rem);
+}
+
+.stitch-auth-card .auth-form-header {
+    gap: 0.8rem;
+}
+
+.stitch-auth-card .auth-form-header h2 {
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    line-height: 1.04;
+    letter-spacing: 0;
+}
+
+.stitch-auth-card .auth-form-header p {
+    color: var(--on-surface-variant);
+}
+
+.stitch-auth-card .status-pill {
+    width: fit-content;
+    border-color: rgba(21, 35, 42, 0.1);
+    background: var(--surface-container-low);
+}
+
+.auth-field-control {
+    min-height: 4rem;
+    border-radius: 0.85rem;
+    background: #f3f4f3;
+}
+
+.auth-field-control:focus-within {
+    box-shadow:
+        inset 3px 0 0 #b8ccb9,
+        0 0 0 4px rgba(145, 166, 148, 0.13);
+}
+
+.stitch-auth-card .stitch-primary {
+    min-height: 3.9rem;
+    border-color: var(--primary);
+    background: linear-gradient(135deg, #27483f, #6f8b75);
+}
+
+.stitch-auth-card .ghost-auth {
+    min-height: 3.45rem;
+    background: var(--surface-container-low);
+}
+
+.psyche-sidebar {
+    border-right-color: rgba(255, 250, 240, 0.1);
+    background:
+        radial-gradient(circle at 14% 0%, rgba(145, 166, 148, 0.18), transparent 28%),
+        linear-gradient(180deg, #1b332f 0%, #142825 100%);
+    color: var(--on-primary);
+    backdrop-filter: none;
+}
+
+.psyche-brand h1 {
+    color: #ffffff;
+}
+
+.psyche-brand p,
+.psyche-profile span {
+    color: rgba(255, 250, 240, 0.56);
+}
+
+.psyche-avatar,
+.psyche-profile-icon {
+    border: 1px solid rgba(255, 250, 240, 0.16);
+    background: rgba(255, 250, 240, 0.08);
+    color: var(--on-primary);
+}
+
+.psyche-nav-item {
+    color: rgba(255, 250, 240, 0.62);
+}
+
+.psyche-nav-item.active {
+    border-color: rgba(186, 207, 188, 0.46);
+    background: rgba(255, 250, 240, 0.1);
+    color: #ffffff;
+    box-shadow: inset 3px 0 0 #b8ccb9;
+}
+
+.psyche-nav-item:not(.active):hover {
+    border-color: rgba(255, 250, 240, 0.1);
+    background: rgba(255, 250, 240, 0.07);
+    color: #ffffff;
+    box-shadow: none;
+}
+
+.stitch-profile-card {
+    border-color: rgba(255, 250, 240, 0.12);
+    background: rgba(255, 250, 240, 0.06);
+}
+
+.psyche-profile strong {
+    color: #ffffff;
+}
+
+.psyche-logout {
+    border-color: rgba(255, 250, 240, 0.12);
+    background: rgba(255, 250, 240, 0.07);
+    color: rgba(255, 250, 240, 0.72);
+}
+
+.psyche-main {
+    background: #f8f4ec;
+}
+
+.psyche-topbar {
+    border-bottom-color: rgba(67, 84, 73, 0.1);
+    background: rgba(255, 253, 248, 0.9);
+    box-shadow: 0 12px 28px rgba(52, 69, 58, 0.05);
+}
+
+.quote-card,
+.bento-card,
+.activity-card,
+.upload-dropzone,
+.knowledge-card,
+.essay-card,
+.settings-card,
+.restricted-card,
+.empty-garden,
+.curator-welcome,
+.stitch-upload-status,
+.curator-card {
+    border-color: rgba(21, 35, 42, 0.08);
+    background: rgba(255, 253, 248, 0.94);
+    box-shadow: 0 20px 46px rgba(52, 69, 58, 0.07);
+}
+
+.quote-card {
+    background:
+        radial-gradient(circle at 86% 50%, rgba(127, 156, 177, 0.16), transparent 32%),
+        linear-gradient(135deg, #ffffff, #eef2f2);
+}
+
+.preference-toggle {
+    border-color: rgba(21, 35, 42, 0.1);
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--primary);
+}
+
+@media (max-width: 980px) {
+    .auth-command-center {
+        width: min(100%, 46rem);
+        min-height: 0;
+        grid-template-columns: 1fr;
+        border-radius: 1.5rem;
+    }
+
+    .stitch-auth-card {
+        order: -1;
+        min-height: auto;
+        padding: 3rem clamp(1.5rem, 7vw, 4rem);
+    }
+
+    .stitch-landing-hero {
+        min-height: auto;
+    }
+
+    .psyche-sidebar {
+        border-bottom-color: rgba(246, 242, 233, 0.08);
+    }
+}
+
+@media (max-width: 720px) {
+    .auth-command-center {
+        border-radius: 1rem;
+    }
+
+    .stitch-auth-card {
+        padding: 2rem 1.35rem;
+    }
+
+    .stitch-landing-hero {
+        padding: 1.5rem 1.25rem;
+    }
+}
+
+/* Mobile app polish: bottom navigation, compact chrome, and phone-sized chat surfaces. */
+@media (max-width: 720px) {
+    :root {
+        --topbar-height: auto;
+        --mobile-topbar-space: calc(4.35rem + env(safe-area-inset-top));
+        --mobile-bottom-nav-space: calc(5.55rem + env(safe-area-inset-bottom));
+        --page-padding: clamp(0.8rem, 3.6vw, 1rem);
+        --canvas-padding-inline: 0.875rem;
+        --canvas-padding-block: 0.875rem;
+        --chat-shell-stable-height: calc(100dvh - var(--mobile-topbar-space) - var(--mobile-bottom-nav-space) - 6.25rem);
+        --chat-message-window-min-height: 0;
+        --chat-message-body-min-height: 0;
+    }
+
+    html {
+        min-width: 0;
+        overflow-x: hidden;
+    }
+
+    body {
+        overflow-x: hidden;
+        background: #f8f4ec;
+    }
+
+    body::before {
+        opacity: 0.45;
+    }
+
+    .auth-screen {
+        display: block;
+        min-height: 100dvh;
+        padding: 0;
+        background: #f5f4f1;
+    }
+
+    .auth-command-center {
+        display: grid;
+        width: 100%;
+        min-height: 100dvh;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .stitch-auth-card {
+        min-height: auto;
+        padding: max(4.25rem, calc(2.25rem + env(safe-area-inset-top))) 1rem 1.25rem;
+    }
+
+    .stitch-auth-card .auth-form-header h2 {
+        font-size: clamp(2rem, 11vw, 2.8rem);
+    }
+
+    .auth-field-control,
+    .stitch-auth-card .stitch-primary,
+    .stitch-auth-card .ghost-auth {
+        min-height: 3.5rem;
+    }
+
+    .stitch-landing-hero {
+        gap: 1rem;
+        padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
+    }
+
+    .auth-preview-panel {
+        display: flex;
+        gap: 0.75rem;
+        overflow-x: auto;
+        padding-bottom: 0.2rem;
+        scroll-snap-type: x proximity;
+    }
+
+    .auth-preview-card {
+        flex: 0 0 min(82vw, 18rem);
+        min-height: 5.5rem;
+        scroll-snap-align: start;
+    }
+
+    .auth-trust-rail {
+        gap: 0.25rem;
+    }
+
+    .auth-preferences {
+        position: fixed;
+        top: max(0.75rem, env(safe-area-inset-top));
+        right: 0.875rem;
+        z-index: 40;
+    }
+
+    .psyche-shell {
+        display: block;
+        min-height: 100dvh;
+        padding-bottom: var(--mobile-bottom-nav-space);
+        overflow: visible;
+    }
+
+    .psyche-sidebar {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 50;
+        width: 100%;
+        min-height: 0;
+        padding: 0.45rem 0.55rem calc(0.45rem + env(safe-area-inset-bottom));
+        border: 0;
+        border-top: 1px solid rgba(246, 242, 233, 0.12);
+        border-radius: 1.25rem 1.25rem 0 0;
+        box-shadow: 0 -18px 42px rgba(21, 35, 42, 0.18);
+    }
+
+    .psyche-brand,
+    .stitch-profile-card {
+        display: none;
+    }
+
+    .psyche-nav {
+        display: flex;
+        flex: none;
+        gap: 0.35rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        padding: 0;
+        scroll-padding-inline: 0.625rem;
+        scroll-snap-type: x proximity;
+        scrollbar-width: none;
+    }
+
+    .psyche-nav::-webkit-scrollbar,
+    .reflection-actions::-webkit-scrollbar,
+    .reflection-session-list::-webkit-scrollbar {
+        display: none;
+    }
+
+    .psyche-nav-item {
+        flex: 0 0 clamp(4.35rem, 19vw, 4.9rem);
+        min-height: 4.2rem;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.3rem;
+        padding: 0.5rem 0.45rem;
+        border-radius: 1rem;
+        font-size: 0.72rem;
+        line-height: 1.12;
+        text-align: center;
+        white-space: normal;
+        scroll-snap-align: start;
+    }
+
+    .psyche-nav-item .app-icon {
+        --icon-size: 1.25rem;
+    }
+
+    .psyche-nav-item.active {
+        box-shadow: inset 0 3px 0 #b8ccb9;
+    }
+
+    .psyche-main {
+        min-height: 100dvh;
+        padding-top: var(--mobile-topbar-space);
+        padding-bottom: 0;
+        overflow: visible;
+    }
+
+    .psyche-topbar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 30;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.65rem;
+        padding: calc(0.75rem + env(safe-area-inset-top)) 0.875rem 0.75rem;
+    }
+
+    .psyche-search {
+        flex: none;
+        min-height: 2.85rem;
+        padding-inline: 0.85rem;
+    }
+
+    .psyche-search input {
+        min-width: 0;
+        font-size: 0.92rem;
+    }
+
+    .psyche-top-actions {
+        gap: 0;
+        justify-content: flex-end;
+    }
+
+    .psyche-top-actions > .app-icon {
+        display: none;
+    }
+
+    .preference-toggle {
+        min-height: 2.65rem;
+        padding-inline: 0.8rem;
+        white-space: nowrap;
+    }
+
+    .psyche-canvas,
+    .psyche-chat-layout,
+    .stitch-chat-layout {
+        padding: 0.875rem 0.875rem calc(1.25rem + env(safe-area-inset-bottom));
+    }
+
+    .dashboard-view,
+    .knowledge-view,
+    .essays-view,
+    .settings-view,
+    .insights-view,
+    .timeline-view,
+    .reflection-archive-grid,
+    .settings-sanctuary-grid {
+        gap: 1rem;
+    }
+
+    .page-hero {
+        gap: 0.9rem;
+    }
+
+    .page-hero h2 {
+        font-size: clamp(1.9rem, 9vw, 2.45rem);
+        line-height: 1.02;
+        letter-spacing: 0;
+    }
+
+    .page-hero p {
+        margin-top: 0.65rem;
+        font-size: 0.95rem;
+        line-height: 1.62;
+    }
+
+    .essays-view .page-hero {
+        padding: 1.15rem;
+        border-radius: 1.15rem;
+    }
+
+    .essays-view .page-hero h2 {
+        font-size: clamp(2rem, 11vw, 2.75rem);
+    }
+
+    .quote-card {
+        min-height: 11rem;
+        padding: 1.25rem;
+    }
+
+    .quote-card h2 {
+        font-size: clamp(1.45rem, 7vw, 2rem);
+    }
+
+    .bento-grid,
+    .activity-grid,
+    .settings-grid,
+    .document-stack,
+    .essay-grid,
+    .reflection-archive-grid .essay-grid,
+    .settings-sanctuary-grid .settings-grid,
+    .insight-signal-grid {
+        gap: 0.875rem;
+        grid-template-columns: 1fr;
+    }
+
+    .bento-card,
+    .activity-card,
+    .settings-card,
+    .knowledge-card,
+    .essay-card {
+        min-height: 0;
+        padding: 1.1rem;
+    }
+
+    .essay-card {
+        gap: 1rem;
+        border-radius: 1.1rem;
+    }
+
+    .bento-card strong {
+        font-size: clamp(1.85rem, 12vw, 2.7rem);
+    }
+
+    .knowledge-stage-shell {
+        gap: 0.875rem;
+    }
+
+    .knowledge-hero-panel {
+        padding: 1.15rem;
+    }
+
+    .knowledge-dropzone,
+    .upload-dropzone {
+        min-height: 11.5rem;
+        padding: 1.4rem 1rem;
+    }
+
+    .knowledge-card-cover {
+        aspect-ratio: 4 / 3;
+    }
+
+    .essay-card.featured,
+    .themes-card,
+    .coverage-card {
+        grid-column: auto;
+    }
+
+    .essay-card-actions,
+    .essay-card-footer,
+    .knowledge-upload-actions {
+        justify-content: stretch;
+    }
+
+    .essay-card-actions > *,
+    .essay-card-footer button,
+    .knowledge-upload-actions > *,
+    .page-hero .stitch-primary {
+        width: 100%;
+    }
+
+    .psyche-chat-layout,
+    .stitch-chat-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.875rem;
+        height: auto;
+        min-height: 0;
+        max-width: none;
+        overflow: visible;
+    }
+
+    .reflection-list {
+        display: grid;
+        min-height: 0;
+        height: auto;
+        max-height: none;
+        gap: 0.8rem;
+        padding: 1rem;
+        border-radius: 1rem;
+    }
+
+    .reflection-list .activity-head {
+        align-items: center;
+    }
+
+    .reflection-actions {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 0.625rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 0.1rem;
+        scroll-snap-type: x proximity;
+    }
+
+    .reflection-chip {
+        flex: 0 0 min(76vw, 17rem);
+        width: auto;
+        scroll-snap-align: start;
+    }
+
+    .reflection-session-list {
+        display: flex;
+        gap: 0.625rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 0 0 0.1rem;
+    }
+
+    .reflection-session-row {
+        flex: 0 0 min(72vw, 16rem);
+        gap: 0.45rem;
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .reflection-session {
+        min-height: 3rem;
+        padding: 0.75rem 0.85rem;
+        border-radius: 0.85rem;
+    }
+
+    .session-delete {
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: 0.85rem;
+    }
+
+    .deep-chat {
+        min-height: clamp(27rem, var(--chat-shell-stable-height), 42rem);
+        height: clamp(27rem, var(--chat-shell-stable-height), 42rem);
+        max-height: none;
+        border-radius: 1rem;
+    }
+
+    .deep-chat-header {
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+
+    .deep-chat-header h2 {
+        font-size: 1.25rem;
+    }
+
+    .deep-chat-header p {
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .kb-active {
+        align-self: flex-start;
+        min-height: 2rem;
+        padding-inline: 0.7rem;
+        white-space: normal;
+    }
+
+    .deep-chat-messages {
+        gap: 0.9rem;
+        padding: 1rem;
+        scrollbar-gutter: auto;
+    }
+
+    .curator-welcome {
+        margin-top: 0;
+        padding: 1.15rem;
+    }
+
+    .curator-card {
+        width: 100%;
+        gap: 0.85rem;
+        padding: 1rem;
+    }
+
+    .user-bubble {
+        max-width: 92%;
+        padding: 0.85rem 0.95rem;
+        line-height: 1.62;
+    }
+
+    .citation-card {
+        align-items: flex-start;
+    }
+
+    .markdown-body {
+        gap: 0.8rem;
+        line-height: 1.65;
+    }
+
+    .citation-card {
+        padding: 0.85rem;
+    }
+
+    .deep-input-area {
+        grid-template-columns: minmax(0, 1fr) 3.15rem;
+        gap: 0.65rem;
+        align-items: end;
+        padding: 0.875rem 1rem 1rem;
+    }
+
+    .deep-input-area textarea {
+        height: 3.15rem;
+        min-height: 3.15rem;
+        max-height: 3.15rem;
+        padding: 0.75rem 0.85rem;
+        border-radius: 0.85rem;
+    }
+
+    .send-reflection {
+        width: 3.15rem;
+        min-height: 3.15rem;
+        border-radius: 0.85rem;
+    }
+
+    .deep-input-area small {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 430px) {
+    :root {
+        --mobile-topbar-space: calc(4.05rem + env(safe-area-inset-top));
+        --mobile-bottom-nav-space: calc(5.05rem + env(safe-area-inset-bottom));
+        --chat-shell-stable-height: calc(100dvh - var(--mobile-topbar-space) - var(--mobile-bottom-nav-space) - 5.25rem);
+    }
+
+    .stitch-auth-card {
+        padding-inline: 0.875rem;
+    }
+
+    .stitch-landing-hero {
+        padding-inline: 0.875rem;
+    }
+
+    .auth-preview-card {
+        flex-basis: min(84vw, 16rem);
+    }
+
+    .psyche-sidebar {
+        border-radius: 1rem 1rem 0 0;
+        padding-inline: 0.45rem;
+    }
+
+    .psyche-nav {
+        gap: 0.25rem;
+        scroll-padding-inline: 0.45rem;
+    }
+
+    .psyche-nav-item {
+        flex-basis: 4.05rem;
+        min-height: 3.85rem;
+        padding: 0.45rem 0.3rem;
+        border-radius: 0.85rem;
+        font-size: 0.66rem;
+    }
+
+    .psyche-nav-item .app-icon {
+        --icon-size: 1.12rem;
+    }
+
+    .psyche-topbar {
+        gap: 0.45rem;
+        padding-inline: 0.7rem;
+        padding-bottom: 0.6rem;
+    }
+
+    .psyche-search {
+        min-height: 2.65rem;
+        gap: 0.5rem;
+        padding-inline: 0.7rem;
+    }
+
+    .psyche-search .app-icon {
+        --icon-size: 1rem;
+    }
+
+    .preference-toggle {
+        min-height: 2.45rem;
+        padding-inline: 0.65rem;
+        font-size: 0.7rem;
+    }
+
+    .psyche-canvas,
+    .psyche-chat-layout,
+    .stitch-chat-layout {
+        padding-inline: 0.7rem;
+    }
+
+    .quote-card,
+    .bento-card,
+    .activity-card,
+    .settings-card,
+    .knowledge-card,
+    .essay-card,
+    .reflection-list,
+    .deep-chat,
+    .curator-card {
+        border-radius: 0.9rem;
+    }
+
+    .activity-head {
+        gap: 0.7rem;
+    }
+
+    .status-pill,
+    .insight-chip,
+    .essay-meta span,
+    .kb-active,
+    .reflection-chip {
+        min-height: 1.95rem;
+        padding-inline: 0.7rem;
+        font-size: 0.76rem;
+    }
+
+    .reflection-chip {
+        flex-basis: min(82vw, 15.5rem);
+    }
+
+    .reflection-session-row {
+        flex-basis: min(78vw, 15rem);
+    }
+
+    .deep-chat {
+        min-height: clamp(25rem, var(--chat-shell-stable-height), 38rem);
+        height: clamp(25rem, var(--chat-shell-stable-height), 38rem);
+    }
+
+    .deep-chat-header,
+    .deep-chat-messages,
+    .deep-input-area {
+        padding-inline: 0.85rem;
+    }
+
+    .deep-input-area {
+        grid-template-columns: minmax(0, 1fr) 2.9rem;
+    }
+
+    .send-reflection {
+        width: 2.9rem;
+        min-height: 2.9rem;
     }
 }

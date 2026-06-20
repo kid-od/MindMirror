@@ -22,6 +22,7 @@ class MilvusManager:
         self.collection_name = collection_name or os.getenv("MILVUS_COLLECTION", "embeddings_collection")
         self.uri = f"http://{self.host}:{self.port}"
         self.client = None
+        # 记录最近一次成功使用 client 的时间，避免空闲太久后命中已失效的 gRPC 通道。
         self.client_last_used_at: float | None = None
         self.client_max_idle_seconds = DEFAULT_CLIENT_MAX_IDLE_SECONDS
 
@@ -44,6 +45,7 @@ class MilvusManager:
 
     def _get_client(self) -> MilvusClient:
         # Lazy-create client to avoid blocking app import/startup when Milvus is temporarily unavailable.
+        # 如果连接已经长时间空闲，先主动换一个新 client，减少下一次 RPC 才报 closed channel 的噪音。
         if self._client_is_idle():
             self._reset_client()
         if self.client is None:
@@ -77,6 +79,7 @@ class MilvusManager:
         except Exception as exc:
             if not self._is_stale_connection_error(exc):
                 raise
+            # 这里只对“连接陈旧/通道已关闭”做一次重试，避免把业务错误误判成可恢复的连接问题。
             self._reset_client()
             client = self._get_client()
             result = operation(client)

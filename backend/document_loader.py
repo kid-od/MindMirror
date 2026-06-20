@@ -1,4 +1,8 @@
-"""文档加载和分片服务"""
+"""文档加载和分片服务。
+
+公共知识库采用“三层分块”：父级 chunk 存 PostgreSQL，叶子 chunk 写 Milvus 做召回；
+私密随笔则保留完整正文，并按 Milvus 文本长度限制切成可检索片段。
+"""
 import os
 import re
 from pathlib import Path
@@ -12,9 +16,14 @@ try:
 except ModuleNotFoundError:
     from backend.text_utils import sanitize_text
 
+try:
+    from upload_files import SUPPORTED_UPLOAD_EXTENSIONS
+except ModuleNotFoundError:
+    from backend.upload_files import SUPPORTED_UPLOAD_EXTENSIONS
+
 
 class DocumentLoader:
-    """文档加载和分片服务"""
+    """把不同格式的文档统一转换成带元数据的 chunk 列表。"""
     _MILVUS_TEXT_MAX_BYTES = 2000
     _ESSAY_TARGET_BYTES = 1800
     _ESSAY_BREAKPOINTS = {"\n", "。", "！", "？", "；", "，", "、", " ", ".", "!", "?", ";", ","}
@@ -55,6 +64,7 @@ class DocumentLoader:
 
     @staticmethod
     def _build_chunk_scope_prefix(base_doc: Dict) -> str:
+        """为私密或非默认作用域的 chunk_id 添加前缀，避免不同用户同名文件冲突。"""
         visibility = (base_doc.get("visibility") or "public").strip().lower()
         owner_id = (base_doc.get("owner_id") or "").strip()
         document_domain = (base_doc.get("document_domain") or "knowledge_base").strip().lower()
@@ -76,6 +86,7 @@ class DocumentLoader:
         base_doc: Dict,
         page_global_chunk_idx: int,
     ) -> List[Dict]:
+        """将单页文本拆成 L1/L2/L3 三层 chunk，保留父子关系用于 auto-merging。"""
         text = sanitize_text(text).strip()
         if not text:
             return []
@@ -155,6 +166,7 @@ class DocumentLoader:
 
     @classmethod
     def _split_text_by_max_bytes(cls, text: str, max_bytes: int) -> List[str]:
+        """按 UTF-8 字节数切分文本，优先在中文标点或空白处断开。"""
         cleaned = sanitize_text(text).strip()
         if not cleaned:
             return []
@@ -197,6 +209,7 @@ class DocumentLoader:
 
     @classmethod
     def _enforce_text_byte_limit(cls, chunks: List[str], max_bytes: int | None = None) -> List[str]:
+        """确保随笔 chunk 不超过 Milvus VARCHAR 字段的字节上限。"""
         limit = max_bytes or cls._ESSAY_TARGET_BYTES
         enforced: List[str] = []
         for chunk in chunks:
@@ -247,6 +260,7 @@ class DocumentLoader:
         metadata: dict | None = None,
         full_text_threshold: int = 2800,
     ) -> dict:
+        """加载私密随笔，并同时返回完整正文与可检索 chunk。"""
         metadata = metadata or {}
         extracted = self.load_document_content(file_path, filename)
         content = sanitize_text(extracted.get("content", "")).strip()
@@ -341,12 +355,7 @@ class DocumentLoader:
 
         for filename in os.listdir(folder_path):
             file_lower = filename.lower()
-            if not (
-                file_lower.endswith(".pdf")
-                or file_lower.endswith((".docx", ".doc"))
-                or file_lower.endswith((".xlsx", ".xls"))
-                or file_lower.endswith((".md", ".markdown"))
-            ):
+            if not file_lower.endswith(SUPPORTED_UPLOAD_EXTENSIONS):
                 continue
 
             file_path = os.path.join(folder_path, filename)

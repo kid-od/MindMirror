@@ -12,13 +12,20 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import User
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-this-secret")
+JWT_SECRET_PLACEHOLDER = "change-this-secret"
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))
 ADMIN_INVITE_CODE = os.getenv("ADMIN_INVITE_CODE", "")
 PBKDF2_ROUNDS = int(os.getenv("PASSWORD_PBKDF2_ROUNDS", "310000"))
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+
+def _jwt_secret_key() -> str:
+    secret_key = (os.getenv("JWT_SECRET_KEY") or "").strip()
+    if not secret_key or secret_key == JWT_SECRET_PLACEHOLDER:
+        raise RuntimeError("JWT_SECRET_KEY 未设置或仍为占位值，请在 .env 中配置强随机密钥")
+    return secret_key
 
 
 def get_db():
@@ -85,7 +92,7 @@ def create_access_token(username: str, role: str) -> str:
         "role": role,
         "exp": expire,
     }
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(payload, _jwt_secret_key(), algorithm=ALGORITHM)
 
 
 def authenticate_user(db: Session, username: str, password: str) -> User | None:
@@ -104,10 +111,12 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, _jwt_secret_key(), algorithms=[ALGORITHM])
         username = payload.get("sub")
         if not username:
             raise credentials_exception
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
     except JWTError:
         raise credentials_exception
 

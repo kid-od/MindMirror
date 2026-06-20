@@ -1,3 +1,9 @@
+"""RAG 检索工具函数。
+
+这里封装检索层的全部细节：Milvus collection 选择、公共/私密作用域过滤、
+精确随笔标题匹配、auto-merging、rerank 适配和 query expansion 辅助模型。
+"""
+
 from collections import defaultdict
 from typing import List, Tuple, Dict, Any
 import os
@@ -116,6 +122,7 @@ def _escape_filter_value(value: str) -> str:
 
 
 def build_scope_filter(user_id: str | None) -> str:
+    """构造“公共知识库 OR 当前用户私密随笔”的混合检索过滤条件。"""
     safe_user = _escape_filter_value(user_id or "")
     public_filter = '(visibility == "public" and document_domain == "knowledge_base")'
     private_filter = (
@@ -126,10 +133,12 @@ def build_scope_filter(user_id: str | None) -> str:
 
 
 def build_knowledge_filter() -> str:
+    """只检索公共知识库，供公共知识通道使用。"""
     return '(visibility == "public" and document_domain == "knowledge_base")'
 
 
 def build_essay_filter(user_id: str | None) -> str:
+    """只检索当前用户私密随笔，避免跨账号泄漏。"""
     safe_user = _escape_filter_value(user_id or "")
     return (
         f'visibility == "private" and owner_id == "{safe_user}" and document_domain == "essay"'
@@ -142,6 +151,7 @@ def _normalize_title_key(value: str) -> str:
 
 
 def _extract_requested_titles(query: str) -> List[str]:
+    """从《标题》、“标题”等写法里提取用户点名要分析的随笔标题。"""
     text = (query or "").strip()
     if not text:
         return []

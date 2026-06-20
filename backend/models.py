@@ -1,3 +1,9 @@
+"""数据库模型。
+
+PostgreSQL 负责保存账号、会话、RAG trace、父级 chunk 和私密随笔正文；
+Milvus 只保存用于召回的叶子向量，因此这里的表承担“可解释、可追踪”的结构化状态。
+"""
+
 from datetime import datetime
 import uuid
 
@@ -8,6 +14,8 @@ from database import Base
 
 
 class User(Base):
+    """登录账号；role 决定是否能管理公共知识库。"""
+
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -20,6 +28,8 @@ class User(Base):
 
 
 class ChatSession(Base):
+    """一次连续 AI 对话的元数据，session_id 对前端可见。"""
+
     __tablename__ = "chat_sessions"
     __table_args__ = (UniqueConstraint("user_id", "session_id", name="uq_user_session"),)
 
@@ -35,6 +45,8 @@ class ChatSession(Base):
 
 
 class ChatMessage(Base):
+    """会话中的单条消息；AI 消息可挂载 rag_trace 供前端展示引用链路。"""
+
     __tablename__ = "chat_messages"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -48,6 +60,8 @@ class ChatMessage(Base):
 
 
 class ParentChunk(Base):
+    """L1/L2 父级 chunk，用于叶子召回后的 auto-merging 合并回更完整语境。"""
+
     __tablename__ = "parent_chunks"
 
     chunk_id: Mapped[str] = mapped_column(String(512), primary_key=True)
@@ -67,6 +81,8 @@ class ParentChunk(Base):
 
 
 class EssayDocument(Base):
+    """用户私密随笔正文；向量库只存分块，这里保存可回查的完整文本。"""
+
     __tablename__ = "essay_documents"
     __table_args__ = (
         UniqueConstraint("owner_id", "filename", name="uq_essay_owner_filename"),

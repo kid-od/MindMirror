@@ -1,3 +1,9 @@
+"""FastAPI 应用入口。
+
+本文件只负责组装应用：初始化数据库、挂载 CORS / 静态文件、接入聚合后的 API router。
+具体业务逻辑按领域拆在 backend/routes/*，方便从入口一路追到各功能模块。
+"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -6,6 +12,7 @@ import os
 import sys
 
 import api as api_module
+from config import parse_cors_origins
 from database import init_db
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -13,21 +20,23 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="Cute Cat Bot API")
+    """创建可被 uvicorn、测试用例和命令行入口复用的 FastAPI 实例。"""
+    app = FastAPI(title="MindMirror API")
 
     @app.on_event("startup")
     async def _startup_init_db():
         init_db()
 
+    cors_origins = parse_cors_origins(os.getenv("CORS_ORIGINS"))
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
+        allow_origins=cors_origins,
+        allow_credentials="*" not in cors_origins,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
-    # No-cache middleware for development
+    # 开发环境避免浏览器缓存前端资源，改 CSS/JS 后刷新即可看到新版本。
     @app.middleware("http")
     async def _no_cache(request, call_next):
         response = await call_next(request)
@@ -40,7 +49,7 @@ def create_app() -> FastAPI:
 
     app.include_router(api_module.router)
 
-    # serve frontend static files at root
+    # 根路径托管 Vue CDN 单页应用；API router 需要先 include，避免被静态资源兜底吞掉。
     if FRONTEND_DIR.exists():
         app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="static")
 

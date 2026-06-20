@@ -4,16 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PsycheArchive</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=immersive-focus">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.5/dist/purify.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-light.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
 <body>
     <div id="app">
-        <div v-if="!isAuthenticated" class="auth-screen stitch-auth-shell stitch-landing-shell">
+        <!-- 未登录态：品牌介绍和登录/注册表单都由 Vue 根据 authMode 切换。 -->
+        <div v-if="!isAuthenticated" class="auth-screen stitch-auth-shell stitch-landing-shell auth-command-center">
             <div class="auth-preferences">
                 <button class="preference-toggle" @click="toggleLocale">{{ t('app.localeToggle') }}</button>
             </div>
@@ -26,35 +28,80 @@
                         <p class="auth-copy">{{ t('app.authCopy') }}</p>
                     </div>
                 </div>
-                <div class="landing-stat-strip">
+                <div class="auth-preview-panel" aria-hidden="true">
+                    <article class="auth-preview-card active">
+                        <span class="app-icon app-icon-dashboard"></span>
+                        <strong>{{ t('nav.dashboard') }}</strong>
+                        <small>{{ locale === 'zh' ? '今日反思' : 'Today' }}</small>
+                    </article>
+                    <article class="auth-preview-card">
+                        <span class="app-icon app-icon-edit-document"></span>
+                        <strong>{{ t('nav.reflections') }}</strong>
+                        <small>{{ essays.length || '12' }} {{ locale === 'zh' ? '篇' : 'notes' }}</small>
+                    </article>
+                    <article class="auth-preview-card">
+                        <span class="app-icon app-icon-psychology-alt"></span>
+                        <strong>{{ t('nav.ai_explorer') }}</strong>
+                        <small>{{ locale === 'zh' ? '已就绪' : 'Ready' }}</small>
+                    </article>
+                </div>
+                <div class="landing-stat-strip auth-trust-rail">
                     <article class="landing-stat-card">
-                        <strong>{{ locale === 'zh' ? '更安静的布局' : 'A calmer layout' }}</strong>
-                        <span>{{ locale === 'zh' ? '把上传、写作和分析收进同一座数字庇护所。' : 'Upload, write, and analyze inside one digital sanctuary.' }}</span>
+                        <strong>{{ locale === 'zh' ? '私密写作空间' : 'Private reflection space' }}</strong>
+                        <span>{{ locale === 'zh' ? '你的随笔和会话只绑定到当前账号。' : 'Essays and sessions stay bound to your account.' }}</span>
                     </article>
                     <article class="landing-stat-card">
-                        <strong>{{ locale === 'zh' ? '保持完整能力' : 'Keep the full workflow' }}</strong>
-                        <span>{{ locale === 'zh' ? '登录、随笔、知识库和 AI 对话都保留。' : 'Auth, reflections, knowledge, and AI chat stay intact.' }}</span>
+                        <strong>{{ locale === 'zh' ? '知识辅助分析' : 'Knowledge-grounded analysis' }}</strong>
+                        <span>{{ locale === 'zh' ? '公共知识库只作为支撑，不覆盖你的原文。' : 'Shared knowledge supports your writing without overpowering it.' }}</span>
                     </article>
                 </div>
             </section>
             <section class="auth-panel stitch-auth-panel stitch-auth-card">
-                <div class="auth-glow stitch-auth-glow auth-glow-primary stitch-auth-glow-primary"></div>
-                <div class="auth-glow stitch-auth-glow auth-glow-tertiary stitch-auth-glow-secondary"></div>
+                <div class="auth-form-header">
+                    <span class="status-pill">{{ authMode === 'login' ? t('auth.login') : t('auth.register') }}</span>
+                    <h2>{{ locale === 'zh' ? '进入你的反思工作台' : 'Enter your reflective workspace' }}</h2>
+                    <p>{{ locale === 'zh' ? '安静地接上上一次的思考。' : 'Pick up the thread where you left it.' }}</p>
+                </div>
                 <div class="auth-fields">
-                    <input v-model="authForm.username" type="text" :placeholder="t('auth.username')">
-                    <input v-model="authForm.password" type="password" :placeholder="t('auth.password')">
-                    <select v-if="authMode === 'register'" v-model="authForm.role">
-                        <option value="user">{{ t('auth.roleUser') }}</option>
-                        <option value="admin">{{ t('auth.roleAdmin') }}</option>
-                    </select>
-                    <input
-                        v-if="authMode === 'register' && authForm.role === 'admin'"
-                        v-model="authForm.admin_code"
-                        type="password"
-                        :placeholder="t('auth.adminInvite')"
-                    >
+                    <label class="auth-field">
+                        <span class="auth-field-label">{{ t('auth.username') }}</span>
+                        <span class="auth-field-control">
+                            <span class="app-icon app-icon-account-circle" aria-hidden="true"></span>
+                            <input v-model="authForm.username" type="text" :placeholder="t('auth.username')" autocomplete="username">
+                        </span>
+                    </label>
+                    <label class="auth-field">
+                        <span class="auth-field-label">{{ t('auth.password') }}</span>
+                        <span class="auth-field-control">
+                            <span class="app-icon app-icon-lock" aria-hidden="true"></span>
+                            <input v-model="authForm.password" type="password" :placeholder="t('auth.password')" autocomplete="current-password">
+                        </span>
+                    </label>
+                    <label v-if="authMode === 'register'" class="auth-field">
+                        <span class="auth-field-label">{{ locale === 'zh' ? '账号类型' : 'Account type' }}</span>
+                        <span class="auth-field-control">
+                            <span class="app-icon app-icon-shield-check" aria-hidden="true"></span>
+                            <select v-model="authForm.role">
+                                <option value="user">{{ t('auth.roleUser') }}</option>
+                                <option value="admin">{{ t('auth.roleAdmin') }}</option>
+                            </select>
+                        </span>
+                    </label>
+                    <label v-if="authMode === 'register' && authForm.role === 'admin'" class="auth-field">
+                        <span class="auth-field-label">{{ t('auth.adminInvite') }}</span>
+                        <span class="auth-field-control">
+                            <span class="app-icon app-icon-lock" aria-hidden="true"></span>
+                            <input
+                                v-model="authForm.admin_code"
+                                type="password"
+                                :placeholder="t('auth.adminInvite')"
+                                autocomplete="off"
+                            >
+                        </span>
+                    </label>
                     <button class="stitch-primary auth-submit" :disabled="authLoading" @click="handleAuthSubmit">
                         {{ authLoading ? t('auth.loginSubmitting') : (authMode === 'login' ? t('auth.login') : t('auth.register')) }}
+                        <span class="app-icon app-icon-arrow-forward" aria-hidden="true"></span>
                     </button>
                     <button class="ghost-auth" @click="authMode = authMode === 'login' ? 'register' : 'login'">
                         {{ authMode === 'login' ? t('auth.toRegister') : t('auth.toLogin') }}
@@ -63,6 +110,7 @@
             </section>
         </div>
 
+        <!-- 登录态：左侧导航固定，右侧 main 按 currentView 渲染各工作台视图。 -->
         <div v-else class="psyche-shell stitch-shell">
             <aside class="psyche-sidebar stitch-sidebar">
                 <div class="psyche-brand stitch-brand-block">
@@ -273,8 +321,8 @@
                                 </div>
                                 <div class="knowledge-card-body">
                                     <div class="document-meta">
-                                        <span class="insight-chip">{{ doc.file_type }}</span>
-                                        <span>{{ doc.chunk_count }} {{ locale === 'zh' ? '个分块' : 'chunks' }}</span>
+                                        <span class="insight-chip">{{ documentSourceLabel(doc) }}</span>
+                                        <span>{{ t('knowledge.readyForReflection') }}</span>
                                     </div>
                                     <h3>{{ doc.filename }}</h3>
                                     <p>{{ t('knowledge.sourceCaption') }}</p>
@@ -330,9 +378,9 @@
                                 <span>{{ t('essays.analyzed') }}</span>
                             </div>
                             <h3>{{ essayDisplayTitle(essay) }}</h3>
-                            <p>{{ essay.chunk_count }} {{ t('essays.chunkLabel') }}</p>
+                            <p>{{ essayReflectionSummary(essay) }}</p>
                             <div class="essay-card-footer">
-                                <span class="insight-chip">{{ essay.file_type }}</span>
+                                <span class="insight-chip">{{ essaySourceLabel(essay) }}</span>
                                 <div class="essay-card-actions">
                                     <button class="ghost-action" @click="deleteEssay(essay.filename)">{{ t('essays.delete') }}</button>
                                     <button @click="openEssayInChat(essay)">
@@ -419,15 +467,20 @@
                                     <div v-if="msg.isThinking && !msg.text" class="thinking-text">{{ t('chat.thinking') }}</div>
                                     <div v-else class="markdown-body" v-html="parseMarkdown(msg.text)"></div>
 
-                                    <div v-if="msg.ragTrace && msg.ragTrace.retrieved_chunks && msg.ragTrace.retrieved_chunks.length" class="citation-stack">
-                                        <div v-for="(chunk, chunkIndex) in msg.ragTrace.retrieved_chunks.slice(0, 3)" :key="chunkIndex" class="citation-card">
+                                    <details v-if="msg.ragTrace && msg.ragTrace.retrieved_chunks && msg.ragTrace.retrieved_chunks.length" class="citation-drawer">
+                                        <summary>
                                             <span class="app-icon app-icon-menu-book" aria-hidden="true"></span>
-                                            <div>
-                                                <h4>{{ t('chat.references', { filename: chunk.filename }) }}</h4>
-                                                <p>{{ shortChunkText(chunk.text) }}</p>
+                                            {{ t('chat.sourcesUsed') }}
+                                        </summary>
+                                        <div class="citation-stack">
+                                            <div v-for="(chunk, chunkIndex) in msg.ragTrace.retrieved_chunks.slice(0, 3)" :key="chunkIndex" class="citation-card">
+                                                <div>
+                                                    <h4>{{ t('chat.references', { filename: chunk.filename }) }}</h4>
+                                                    <p>{{ shortChunkText(chunk.text) }}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </details>
 
                                     <div class="analysis-options">
                                         <span>{{ t('chat.options') }}</span>

@@ -1,5 +1,6 @@
 const { createApp } = Vue;
 
+// 前端是 Vue 3 CDN 单页应用：常量区负责文案/默认数据，createApp 内部负责状态和交互。
 const TOP_THEMES = {
     zh: ['存在主义', '斯多葛主义', '荒诞', '决定论', '伦理'],
     en: ['Existentialism', 'Stoicism', 'Absurdity', 'Determinism', 'Ethics']
@@ -7,14 +8,14 @@ const TOP_THEMES = {
 
 const CHAT_SUGGESTIONS = {
     zh: [
-        '追溯我总是匆忙的根源。',
-        '看看孤立状态带给我的隐性收益。',
-        '梳理我的价值观和日程安排之间的张力。'
+        '陪我看看这背后真正被触动的地方。',
+        '帮我理解这件事可能在保护我什么。',
+        '把我的价值感和现实安排之间的张力慢慢说清楚。'
     ],
     en: [
-        'Trace the origin of the rushing habit.',
-        'Examine the secondary gains of isolation.',
-        'Map the tension between my values and my schedule.'
+        'Help me notice what this is really touching in me.',
+        'Help me understand what this pattern may be protecting.',
+        'Gently unpack the tension between my values and my schedule.'
     ]
 };
 
@@ -45,8 +46,8 @@ const TRANSLATIONS = {
     zh: {
         app: {
             name: 'PsycheArchive',
-            subtitle: '心灵策展人',
-            authCopy: '一个面向心理学、哲学与自我剖析的沉浸式 RAG 工作台。',
+            subtitle: '安静的心绪花园',
+            authCopy: '把随笔、阅读与对话安放在一个更温柔的自我回看空间。',
             localeToggle: '中文 / EN',
             themeLight: '浅色',
             themeDark: '深色'
@@ -64,15 +65,15 @@ const TRANSLATIONS = {
             roleAdmin: '管理员'
         },
         nav: {
-            dashboard: '仪表盘',
-            knowledge_base: '知识库',
-            reflections: '随笔档案',
-            ai_explorer: 'AI 探索',
-            insights: '洞察',
+            dashboard: '今日',
+            knowledge_base: '参考资料',
+            reflections: '反思花园',
+            ai_explorer: '陪伴式回看',
+            insights: '回声',
             timeline: '时间线',
-            knowledge: '知识库',
-            essays: '我的随笔',
-            chat: 'AI 对话',
+            knowledge: '参考资料',
+            essays: '反思花园',
+            chat: '陪伴式回看',
             settings: '设置'
         },
         profile: {
@@ -82,47 +83,48 @@ const TRANSLATIONS = {
         },
         dashboard: {
             quoteLoading: '正在获取今日治愈语句...',
-            totalEssays: '累计写下的随笔',
-            topThemes: '高频主题',
-            knowledgeCoverage: '知识库覆盖率',
-            publicDocs: '公开资料',
-            privateEssays: '私密随笔',
-            deepSessions: '深度会话',
-            startSession: '开始会话',
-            recentEssays: '最近随笔',
+            totalEssays: '写下的心绪',
+            topThemes: '反复出现的主题',
+            knowledgeCoverage: '可参考的阅读',
+            publicDocs: '份参考资料',
+            privateEssays: '段心绪记录',
+            deepSessions: '陪伴回看',
+            startSession: '开始回看',
+            recentEssays: '最近的心绪',
             viewAll: '查看全部',
             emptyEssays: '上传一篇反思、随笔或 Markdown 日志，开始建立你的私人档案。',
-            lastAnalysis: '最近分析主题',
-            openChat: '打开对话',
-            knowledgeActive: '知识库已启用',
+            lastAnalysis: '最近回看的主题',
+            openChat: '继续回看',
+            knowledgeActive: '参考资料已安放',
             updatedMessages: '更新于 {date} · {count} 条消息',
             ready: 'The Mindful Curator 已准备好，随时陪你进入更深的反思。'
         },
         knowledge: {
             title: '知识库',
             restricted: '此区域仅对管理员开放。',
-            hero: '策展心理学、哲学与其他基础文本，作为认知引擎的公共知识来源。支持上传 PDF、DOCX 或 MD 文件。',
-            newUpload: '新建上传',
+            hero: '安放心理学、哲学与其他基础文本，让它们在回看时成为安静的参照背景。',
+            newUpload: '加入资料',
             dropTitle: '拖拽文档到这里',
             dropBody: '支持格式：PDF、DOCX、MD（单文件最大 50MB）',
             browse: '或浏览文件',
-            loading: '正在加载知识库...',
-            empty: '暂时还没有公开资料被索引。',
-            sourceCaption: '这是面向所有反思会话开放的公共知识来源。',
-            delete: '删除'
+            loading: '正在整理资料...',
+            empty: '暂时还没有可参考的资料。',
+            sourceCaption: '会作为反思时的温柔参照，不替代你的原文。',
+            readyForReflection: '已准备好陪伴分析',
+            delete: '移除'
         },
         essays: {
-            title: '你的数字花园',
-            hero: '培育你的想法，识别反复出现的主题，并请求 AI 对过往文字做分步式心理反思。',
-            newEntry: '新建日记',
+            title: '你的心绪花园',
+            hero: '把日记、随笔和片段安放在这里，让 AI 帮你温柔地回看反复出现的情绪、关系与价值线索。',
+            newEntry: '写入新的反思',
             loading: '正在加载你的反思',
             loadingBody: '花园正在准备中。',
-            empty: '还没有日记条目',
-            emptyBody: '上传一篇反思、随笔或 Markdown 日志，开始建立你的私人档案。',
-            analyzed: '已分析',
-            chunkLabel: '个私密反思分块，已用于自我分析',
-            delete: '删除',
-            viewInsights: '查看洞察'
+            empty: '花园还在等待第一颗种子',
+            emptyBody: '上传一篇日记、随笔或 Markdown 片段，开始建立只属于你的反思档案。',
+            analyzed: '可温柔回看',
+            chunkLabel: '段心绪线索已整理好',
+            delete: '移除',
+            viewInsights: '展开回看'
         },
         chat: {
             recents: '最近对话',
@@ -133,16 +135,17 @@ const TRANSLATIONS = {
             deleteSession: '删除会话',
             deleteConfirm: '确定要删除这个会话吗？',
             deleteFailed: '删除会话失败：{message}',
-            title: '深度分析会话',
-            subtitle: '一起梳理你近期文字背后的模式、张力与价值感。',
+            title: '陪伴式回看',
+            subtitle: '我们慢慢读你的文字，靠近那些反复出现的感受、关系和价值感。',
             knowledgeActive: '知识库已启用',
-            welcomeTitle: 'The Mindful Curator 已准备就绪。',
-            welcomeBody: '分享你想要一起审视的一段反思、一个反复出现的习惯，或者一种难以命名的情绪。',
-            thinking: 'The curator 正在思考...',
-            references: '参考资料：{filename}',
-            options: '分步分析选项：',
-            optionOrigin: '追溯根源',
-            optionGains: '看看隐性收益',
+            welcomeTitle: '可以从一段很小的感受开始。',
+            welcomeBody: '写下最近萦绕着你的片段、一个反复出现的习惯，或者一种还没有名字的情绪。',
+            thinking: '我在慢慢读你的文字...',
+            references: '参考过：{filename}',
+            sourcesUsed: '展开参考过的文字',
+            options: '如果还想继续，我们可以顺着这里再看一点：',
+            optionOrigin: '靠近更深处',
+            optionGains: '看看它在保护什么',
             noExcerpt: '暂无摘录内容。',
             processingFailed: '这次反思没有顺利完成，请稍后再试。',
             inputPlaceholder: '写下你的反思...',
@@ -174,8 +177,8 @@ const TRANSLATIONS = {
             uploadChooseFile: '请先选择文件',
             browserStreamUnsupported: '浏览器不支持流式响应',
             browserUploadStreamUnsupported: '浏览器不支持流式上传响应',
-            searchKnowledge: '搜索知识库...',
-            searchEssays: '搜索随笔...',
+            searchKnowledge: '搜索参考资料...',
+            searchEssays: '搜索心绪记录...',
             searchInsights: '搜索洞察...',
             searchReflections: '搜索你的反思...',
             untitledReflection: '未命名反思',
@@ -197,14 +200,14 @@ const TRANSLATIONS = {
             partialUploadFailed: '已有 {count} 个文件上传失败，继续处理剩余文件...',
             uploadComplete: '上传完成',
             uploadMissingResult: '上传流程未返回完成结果',
-            askAnalyzeEssay: '请帮我一步步分析这篇反思《{title}》。'
+            askAnalyzeEssay: '请陪我温柔地回看这篇反思《{title}》，像写一段短文一样帮我理解它。'
         }
     },
     en: {
         app: {
             name: 'PsycheArchive',
-            subtitle: 'The Mindful Curator',
-            authCopy: 'An immersive RAG workspace for psychology, philosophy, and self-analysis.',
+            subtitle: 'A quiet reflection garden',
+            authCopy: 'A softer space for journals, readings, and AI-guided self-reflection.',
             localeToggle: '中文 / EN',
             themeLight: 'Light',
             themeDark: 'Dark'
@@ -222,15 +225,15 @@ const TRANSLATIONS = {
             roleAdmin: 'Admin'
         },
         nav: {
-            dashboard: 'Dashboard',
-            knowledge_base: 'Knowledge Base',
-            reflections: 'Reflections',
-            ai_explorer: 'AI Explorer',
-            insights: 'Insights',
+            dashboard: 'Today',
+            knowledge_base: 'References',
+            reflections: 'Reflection Garden',
+            ai_explorer: 'Guided Reflection',
+            insights: 'Echoes',
             timeline: 'Timeline',
-            knowledge: 'Knowledge Base',
-            essays: 'My Essays',
-            chat: 'AI Chat',
+            knowledge: 'References',
+            essays: 'Reflection Garden',
+            chat: 'Guided Reflection',
             settings: 'Settings'
         },
         profile: {
@@ -240,47 +243,48 @@ const TRANSLATIONS = {
         },
         dashboard: {
             quoteLoading: 'Fetching today’s healing words...',
-            totalEssays: 'Total Essays Written',
-            topThemes: 'Top Themes',
-            knowledgeCoverage: 'Knowledge Base Coverage',
-            publicDocs: 'public docs',
-            privateEssays: 'private essays',
-            deepSessions: 'Deep Sessions',
-            startSession: 'Start Session',
-            recentEssays: 'Recent Essays',
+            totalEssays: 'Reflections Kept',
+            topThemes: 'Returning Themes',
+            knowledgeCoverage: 'Reading Support',
+            publicDocs: 'references',
+            privateEssays: 'reflection notes',
+            deepSessions: 'Guided Revisits',
+            startSession: 'Begin Reflection',
+            recentEssays: 'Recent Reflections',
             viewAll: 'View All',
             emptyEssays: 'Upload a reflection, essay, or markdown journal to start your private archive.',
-            lastAnalysis: 'Last Analysis Topic',
-            openChat: 'Open Chat',
-            knowledgeActive: 'Knowledge Base Active',
+            lastAnalysis: 'Recently Revisited',
+            openChat: 'Keep Reflecting',
+            knowledgeActive: 'References Ready',
             updatedMessages: 'Updated {date} · {count} messages',
             ready: 'The Mindful Curator is ready whenever you want to begin a deeper reflection.'
         },
         knowledge: {
             title: 'Knowledge Base',
             restricted: 'This area is reserved for admin curators.',
-            hero: 'Curate psychology, philosophy, and foundational texts for the cognitive engine. Upload PDF, DOCX, or MD files.',
-            newUpload: 'New Upload',
+            hero: 'Collect psychology, philosophy, and foundational texts so they can quietly support future reflections.',
+            newUpload: 'Add Source',
             dropTitle: 'Drag & Drop Documents',
             dropBody: 'Supported formats: PDF, DOCX, MD (Max 50MB per file)',
             browse: 'or browse files',
-            loading: 'Loading knowledge base...',
-            empty: 'No public documents indexed yet.',
-            sourceCaption: 'Public knowledge source available to every reflective session.',
-            delete: 'Delete'
+            loading: 'Preparing your sources...',
+            empty: 'No reference sources yet.',
+            sourceCaption: 'A gentle reference for reflection, never a replacement for your own words.',
+            readyForReflection: 'Ready to support reflection',
+            delete: 'Remove'
         },
         essays: {
-            title: 'Your Digital Garden',
-            hero: 'Cultivate your thoughts, track recurring themes, and request AI-guided psychological reflection on your past entries.',
-            newEntry: 'New Journal Entry',
+            title: 'Your Reflection Garden',
+            hero: 'Keep journals, notes, and fragments in one calm place, then let AI help you revisit recurring feelings, relationships, and values.',
+            newEntry: 'Add Reflection',
             loading: 'Loading your reflections',
             loadingBody: 'The garden is being prepared.',
-            empty: 'No journal entries yet',
-            emptyBody: 'Upload a reflection, essay, or markdown journal to start your private archive.',
-            analyzed: 'Analyzed',
-            chunkLabel: 'private reflection chunks indexed for self-analysis',
-            delete: 'Delete',
-            viewInsights: 'View Insights'
+            empty: 'Your garden is waiting for its first seed',
+            emptyBody: 'Upload a journal, essay, or markdown note to begin your private reflection archive.',
+            analyzed: 'Ready to revisit',
+            chunkLabel: 'reflection threads are ready',
+            delete: 'Remove',
+            viewInsights: 'Reflect gently'
         },
         chat: {
             recents: 'Recents',
@@ -291,16 +295,17 @@ const TRANSLATIONS = {
             deleteSession: 'Delete session',
             deleteConfirm: 'Delete this session?',
             deleteFailed: 'Failed to delete session: {message}',
-            title: 'Deep Analysis Session',
-            subtitle: 'Reflecting on the patterns, tensions, and values behind your recent writing.',
+            title: 'Guided Reflection',
+            subtitle: 'A slower reading of your words, feelings, relationships, and values.',
             knowledgeActive: 'Knowledge Base Active',
-            welcomeTitle: 'The Mindful Curator is ready.',
-            welcomeBody: 'Share a reflection, tension, or recurring pattern you want to examine.',
-            thinking: 'The curator is reflecting...',
-            references: 'Reference: {filename}',
-            options: 'Step-by-step analysis options:',
-            optionOrigin: 'Trace the origin',
-            optionGains: 'Examine secondary gains',
+            welcomeTitle: 'You can begin with one small feeling.',
+            welcomeBody: 'Share a recent fragment, a recurring habit, or an emotion that does not have a clear name yet.',
+            thinking: 'I am reading your words slowly...',
+            references: 'Revisited: {filename}',
+            sourcesUsed: 'Open the passages I referenced',
+            options: 'If you want to continue, we can stay with one thread:',
+            optionOrigin: 'Move closer to it',
+            optionGains: 'See what it protects',
             noExcerpt: 'No excerpt available.',
             processingFailed: 'The curator could not complete this reflection.',
             inputPlaceholder: 'Share your reflections...',
@@ -332,8 +337,8 @@ const TRANSLATIONS = {
             uploadChooseFile: 'Please choose at least one file',
             browserStreamUnsupported: 'Your browser does not support streaming responses',
             browserUploadStreamUnsupported: 'Your browser does not support streaming upload responses',
-            searchKnowledge: 'Search knowledge base...',
-            searchEssays: 'Search essays...',
+            searchKnowledge: 'Search references...',
+            searchEssays: 'Search reflections...',
             searchInsights: 'Search insights...',
             searchReflections: 'Search your reflections...',
             untitledReflection: 'Untitled Reflection',
@@ -355,7 +360,7 @@ const TRANSLATIONS = {
             partialUploadFailed: '{count} files failed, continuing with the rest...',
             uploadComplete: 'Upload complete',
             uploadMissingResult: 'The upload stream did not return a completion event',
-            askAnalyzeEssay: 'Please help me analyze the reflection "{title}" step by step.'
+            askAnalyzeEssay: 'Please help me gently revisit the reflection "{title}" as a warm, essay-like response.'
         }
     }
 };
@@ -428,9 +433,51 @@ function normalizeDailyQuote(quote, locale = 'zh') {
     };
 }
 
+// 后端聊天和上传都通过 Server-Sent Events 推送进度；统一读取逻辑避免两处手写缓冲解析。
+async function consumeSseMessages(response, onMessage, { onParseError = null } = {}) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        let eventEndIndex;
+        while ((eventEndIndex = buffer.indexOf('\n\n')) !== -1) {
+            const eventStr = buffer.slice(0, eventEndIndex);
+            buffer = buffer.slice(eventEndIndex + 2);
+
+            if (!eventStr.startsWith('data: ')) {
+                continue;
+            }
+
+            const dataStr = eventStr.slice(6);
+            if (dataStr === '[DONE]') {
+                continue;
+            }
+
+            let payload;
+            try {
+                payload = JSON.parse(dataStr);
+            } catch (error) {
+                if (typeof onParseError === 'function') {
+                    onParseError(error, dataStr);
+                    continue;
+                }
+                throw error;
+            }
+            await onMessage(payload);
+        }
+    }
+}
+
 createApp({
     data() {
         return {
+            // 对话状态
             messages: [],
             userInput: '',
             isLoading: false,
@@ -439,6 +486,7 @@ createApp({
             activeEssayId: '',
             activeEssayTitle: '',
             analysisMode: 'general',
+            // 工作台数据
             sessions: [],
             insights: emptyInsights(),
             insightsLoading: false,
@@ -460,6 +508,7 @@ createApp({
             knowledgeUploadError: '',
             essayUploadProgress: '',
             essayUploadError: '',
+            // 登录与本地偏好
             token: localStorage.getItem('accessToken') || '',
             locale: localStorage.getItem('locale') === 'en' ? 'en' : 'zh',
             currentUser: null,
@@ -583,6 +632,48 @@ createApp({
             return (essay && essay.title) || this.essayTitle(essay?.filename);
         },
 
+        documentSourceLabel(doc) {
+            const type = String(doc?.file_type || doc?.filename || '').toLowerCase();
+            if (this.locale === 'zh') {
+                if (type.includes('pdf')) return '阅读资料';
+                if (type.includes('doc') || type.includes('word')) return '手稿资料';
+                if (type.includes('md') || type.includes('markdown')) return '文字资料';
+                return '参考资料';
+            }
+            if (type.includes('pdf')) return 'Reading source';
+            if (type.includes('doc') || type.includes('word')) return 'Manuscript source';
+            if (type.includes('md') || type.includes('markdown')) return 'Text source';
+            return 'Reference source';
+        },
+
+        essaySourceLabel(essay) {
+            const type = String(essay?.file_type || essay?.filename || '').toLowerCase();
+            if (this.locale === 'zh') {
+                if (type.includes('md') || type.includes('markdown')) return '日记片段';
+                if (type.includes('pdf')) return '长文记录';
+                if (type.includes('doc') || type.includes('word')) return '手稿记录';
+                if (type.includes('xls') || type.includes('excel')) return '整理记录';
+                return '心绪记录';
+            }
+            if (type.includes('md') || type.includes('markdown')) return 'Journal note';
+            if (type.includes('pdf')) return 'Longform reflection';
+            if (type.includes('doc') || type.includes('word')) return 'Draft reflection';
+            if (type.includes('xls') || type.includes('excel')) return 'Organized note';
+            return 'Reflection note';
+        },
+
+        essayReflectionSummary(essay) {
+            const title = this.essayDisplayTitle(essay);
+            if (this.locale === 'zh') {
+                return title
+                    ? '已经整理成可回顾的反思脉络，适合慢慢重新靠近。'
+                    : '一段已经沉淀的心绪记录，适合慢慢回看。';
+            }
+            return title
+                ? 'Organized into a reflection thread you can revisit at your own pace.'
+                : 'A settled reflection is ready for a gentler revisit.';
+        },
+
         normalizeViewName(view) {
             return VIEW_ALIASES[view] || view;
         },
@@ -634,7 +725,11 @@ createApp({
             if (!window.marked) {
                 return this.escapeHtml(text || '').replace(/\n/g, '<br>');
             }
-            return window.marked.parse(text || '');
+            const html = window.marked.parse(text || '');
+            if (!window.DOMPurify) {
+                return this.escapeHtml(text || '').replace(/\n/g, '<br>');
+            }
+            return window.DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
         },
 
         escapeHtml(text) {
@@ -712,6 +807,7 @@ createApp({
             }
 
             try {
+                // 封面接口需要鉴权，先用带 token 的请求拿到 blob，再转成浏览器本地可渲染的 URL。
                 const response = await this.authFetch(doc.cover_url);
                 if (!response.ok) {
                     return { ...doc, preview_url: '' };
@@ -854,6 +950,7 @@ createApp({
                 this.sessionId = `session_${Date.now()}`;
                 this.clearEssaySession();
                 await this.loadInitialWorkspaceData();
+                this.resetWorkspaceScroll();
             } catch (error) {
                 alert(error.message);
             } finally {
@@ -907,12 +1004,28 @@ createApp({
             if (nextView === 'ai_explorer') this.loadSessions({ silent: true });
             if (nextView === 'insights') this.loadInsights({ silent: true });
             if (nextView === 'timeline') this.loadTimeline({ silent: true });
+            this.resetWorkspaceScroll();
         },
 
         startNewReflection() {
             this.handleNewChat();
             this.setCurrentView('ai_explorer');
             this.focusComposer();
+        },
+
+        resetWorkspaceScroll() {
+            this.$nextTick(() => {
+                const scrollOptions = { top: 0, left: 0, behavior: 'auto' };
+                const scrollingElement = document.scrollingElement || document.documentElement;
+                if (scrollingElement) {
+                    scrollingElement.scrollTo(scrollOptions);
+                }
+
+                const activePane = document.querySelector('.psyche-canvas, .psyche-chat-layout');
+                if (activePane && typeof activePane.scrollTo === 'function') {
+                    activePane.scrollTo(scrollOptions);
+                }
+            });
         },
 
         focusComposer() {
@@ -1048,50 +1161,28 @@ createApp({
                     throw new Error(this.t('common.browserStreamUnsupported'));
                 }
 
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let buffer = '';
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    buffer += decoder.decode(value, { stream: true });
-
-                    let eventEndIndex;
-                    while ((eventEndIndex = buffer.indexOf('\n\n')) !== -1) {
-                        const eventStr = buffer.slice(0, eventEndIndex);
-                        buffer = buffer.slice(eventEndIndex + 2);
-
-                        if (!eventStr.startsWith('data: ')) {
-                            continue;
-                        }
-
-                        const dataStr = eventStr.slice(6);
-                        if (dataStr === '[DONE]') {
-                            continue;
-                        }
-
-                        try {
-                            const data = JSON.parse(dataStr);
-                            if (data.type === 'content') {
-                                if (this.messages[botMsgIdx].isThinking) {
-                                    this.messages[botMsgIdx].isThinking = false;
-                                }
-                                this.messages[botMsgIdx].text += data.content;
-                            } else if (data.type === 'trace') {
-                                this.messages[botMsgIdx].ragTrace = data.rag_trace || null;
-                            } else if (data.type === 'error') {
+                await consumeSseMessages(
+                    response,
+                    async (data) => {
+                        if (data.type === 'content') {
+                            if (this.messages[botMsgIdx].isThinking) {
                                 this.messages[botMsgIdx].isThinking = false;
-                                this.messages[botMsgIdx].text = data.content || this.t('chat.processingFailed');
                             }
-                        } catch (parseError) {
+                            this.messages[botMsgIdx].text += data.content;
+                        } else if (data.type === 'trace') {
+                            this.messages[botMsgIdx].ragTrace = data.rag_trace || null;
+                        } else if (data.type === 'error') {
+                            this.messages[botMsgIdx].isThinking = false;
+                            this.messages[botMsgIdx].text = data.content || this.t('chat.processingFailed');
+                        }
+                        this.$nextTick(() => this.scrollToBottom());
+                    },
+                    {
+                        onParseError(parseError) {
                             console.warn('SSE parse error:', parseError);
                         }
                     }
-
-                    this.$nextTick(() => this.scrollToBottom());
-                }
+                );
 
                 await this.loadSessions({ silent: true });
             } catch (error) {
@@ -1111,13 +1202,16 @@ createApp({
 
         autoResize(event) {
             const textarea = event.target;
-            textarea.style.height = 'auto';
-            textarea.style.height = `${textarea.scrollHeight}px`;
+            if (!textarea) return;
+            textarea.style.height = '';
+            textarea.style.overflowY = textarea.scrollHeight > textarea.clientHeight ? 'auto' : 'hidden';
         },
 
         resetTextareaHeight() {
             if (this.$refs.textarea) {
-                this.$refs.textarea.style.height = 'auto';
+                this.$refs.textarea.style.height = '';
+                this.$refs.textarea.style.overflowY = 'hidden';
+                this.$refs.textarea.scrollTop = 0;
             }
         },
 
@@ -1314,48 +1408,28 @@ createApp({
                     throw new Error(this.t('common.browserUploadStreamUnsupported'));
                 }
 
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let buffer = '';
                 let successPayload = null;
                 const fileErrors = [];
 
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    buffer += decoder.decode(value, { stream: true });
-
-                    let eventEndIndex;
-                    while ((eventEndIndex = buffer.indexOf('\n\n')) !== -1) {
-                        const eventStr = buffer.slice(0, eventEndIndex);
-                        buffer = buffer.slice(eventEndIndex + 2);
-
-                        if (!eventStr.startsWith('data: ')) {
-                            continue;
+                await consumeSseMessages(response, async (data) => {
+                    if (data.type === 'progress') {
+                        this[progressKey] = data.detail || data.label || this[progressKey];
+                    } else if (data.type === 'file_success') {
+                        this[progressKey] = data.message || this.t('common.fileUploaded', { filename: data.filename });
+                    } else if (data.type === 'file_error') {
+                        fileErrors.push(data);
+                        this[errorKey] = fileErrors.map((item) => `${item.filename}: ${item.content}`).join('\n');
+                        this[progressKey] = this.t('common.partialUploadFailed', { count: fileErrors.length });
+                    } else if (data.type === 'success') {
+                        successPayload = data;
+                        this[progressKey] = data.message || this.t('common.uploadComplete');
+                        if (data.failure_count > 0 && data.failures) {
+                            this[errorKey] = data.failures.map((item) => `${item.filename}: ${item.content}`).join('\n');
                         }
-
-                        const dataStr = eventStr.slice(6);
-                        const data = JSON.parse(dataStr);
-                        if (data.type === 'progress') {
-                            this[progressKey] = data.detail || data.label || this[progressKey];
-                        } else if (data.type === 'file_success') {
-                            this[progressKey] = data.message || this.t('common.fileUploaded', { filename: data.filename });
-                        } else if (data.type === 'file_error') {
-                            fileErrors.push(data);
-                            this[errorKey] = fileErrors.map((item) => `${item.filename}: ${item.content}`).join('\n');
-                            this[progressKey] = this.t('common.partialUploadFailed', { count: fileErrors.length });
-                        } else if (data.type === 'success') {
-                            successPayload = data;
-                            this[progressKey] = data.message || this.t('common.uploadComplete');
-                            if (data.failure_count > 0 && data.failures) {
-                                this[errorKey] = data.failures.map((item) => `${item.filename}: ${item.content}`).join('\n');
-                            }
-                        } else if (data.type === 'error') {
-                            throw new Error(data.content || this.t('common.uploadFailed', { message: this.t('common.unknownError') }));
-                        }
+                    } else if (data.type === 'error') {
+                        throw new Error(data.content || this.t('common.uploadFailed', { message: this.t('common.unknownError') }));
                     }
-                }
+                });
 
                 if (!successPayload) {
                     throw new Error(this.t('common.uploadMissingResult'));

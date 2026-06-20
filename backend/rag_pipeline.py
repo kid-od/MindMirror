@@ -1,3 +1,9 @@
+"""RAG 检索编排图。
+
+流程是：初始检索 -> 相关性评分 -> 必要时重写查询 -> 扩展检索。
+Agent 工具和前端 trace 都依赖这里产出的 rag_trace 字段来解释一次回答的证据链。
+"""
+
 from typing import Literal, TypedDict, List, Optional
 import json
 import os
@@ -23,6 +29,7 @@ _router_model = None
 
 
 def _get_grader_model():
+    """相关性评分模型懒加载；缺少配置时允许降级到查询重写路径。"""
     global _grader_model
     if not API_KEY or not GRADE_MODEL:
         return None
@@ -95,6 +102,7 @@ class RAGState(TypedDict):
 
 
 def _response_text(response: object) -> str:
+    """兼容 LangChain 消息、字符串和结构化内容块，提取可解析文本。"""
     if response is None:
         return ""
     content = getattr(response, "content", response)
@@ -112,6 +120,7 @@ def _response_text(response: object) -> str:
 
 
 def _sanitize_model_response(response: object) -> object:
+    """移除响应里不可 JSON 序列化的 parsed Pydantic 对象，避免 trace 保存失败。"""
     if response is None:
         return None
 
@@ -217,6 +226,7 @@ def _format_docs(docs: List[dict]) -> str:
 
 
 def retrieve_initial(state: RAGState) -> RAGState:
+    """第一轮直接用用户原问题检索私密随笔与公共知识库。"""
     query = state["question"]
     emit_rag_step("🔍", "正在检索知识库...", f"查询: {query[:50]}")
     retrieved = retrieve_documents(
@@ -280,6 +290,7 @@ def retrieve_initial(state: RAGState) -> RAGState:
 
 
 def grade_documents_node(state: RAGState) -> RAGState:
+    """判断初始召回是否足够相关；命中私密随笔时直接进入生成。"""
     essay_context = (state.get("rag_trace") or {}).get("essay_context") or {}
     if essay_context.get("found"):
         rag_trace = state.get("rag_trace", {}) or {}
@@ -324,6 +335,7 @@ def grade_documents_node(state: RAGState) -> RAGState:
 
 
 def rewrite_question_node(state: RAGState) -> RAGState:
+    """选择 step-back / HyDE / complex 策略来扩展检索问题。"""
     question = state["question"]
     emit_rag_step("✏️", "正在重写查询...")
     router = _get_router_model()
@@ -376,6 +388,7 @@ def rewrite_question_node(state: RAGState) -> RAGState:
 
 
 def retrieve_expanded(state: RAGState) -> RAGState:
+    """执行扩展检索，并把多路召回结果去重后写回 trace。"""
     strategy = state.get("expansion_type") or "step_back"
     emit_rag_step("🔄", "使用扩展查询重新检索...", f"策略: {strategy}")
     results: List[dict] = []
@@ -509,6 +522,7 @@ def retrieve_expanded(state: RAGState) -> RAGState:
 
 
 def build_rag_graph():
+    """构建 LangGraph 状态机，供 run_rag_graph 同步调用。"""
     graph = StateGraph(RAGState)
     graph.add_node("retrieve_initial", retrieve_initial)
     graph.add_node("grade_documents", grade_documents_node)
@@ -534,6 +548,7 @@ rag_graph = build_rag_graph()
 
 
 def run_rag_graph(question: str, user_id: str | None = None, session_context: dict | None = None) -> dict:
+    """运行一次完整 RAG 图，返回 docs/context/rag_trace 等状态。"""
     return rag_graph.invoke({
         "question": question,
         "user_id": user_id,

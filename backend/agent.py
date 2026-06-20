@@ -1,3 +1,9 @@
+"""LangChain Agent 与对话存储。
+
+本模块负责把用户消息、历史会话、私密随笔上下文和 RAG 工具串起来。
+HTTP 层只调用 chat_with_agent / chat_with_agent_stream，不直接关心 LangChain 细节。
+"""
+
 from dotenv import load_dotenv
 import os
 import json
@@ -8,7 +14,6 @@ from langchain_core.messages import HumanMessage, AIMessage, AIMessageChunk, Sys
 from config import normalize_base_url
 from error_utils import format_model_error_message
 from tools import (
-    get_current_weather,
     search_knowledge_base,
     get_last_rag_context,
     reset_tool_call_guards,
@@ -51,6 +56,7 @@ def _missing_model_configuration_message() -> str:
 
 
 def _ensure_agent_instance():
+    """懒加载 Agent，避免缺少模型配置时在应用启动阶段直接失败。"""
     global _agent, _model
     api_key, model, _base_url = _current_model_settings()
 
@@ -61,6 +67,7 @@ def _ensure_agent_instance():
         _agent, _model = create_agent_instance()
 
     return _agent, _model
+
 
 class ConversationStorage:
     """对话存储（PostgreSQL + Redis）。"""
@@ -89,6 +96,7 @@ class ConversationStorage:
 
     @staticmethod
     def _normalized_session_metadata(metadata: dict | None) -> dict:
+        """归一化会话的分析模式和当前绑定随笔，防止前端传入脏状态。"""
         source = metadata or {}
         analysis_mode = (source.get("analysis_mode") or "general").strip().lower()
         if analysis_mode not in {"essay", "general"}:
@@ -122,7 +130,7 @@ class ConversationStorage:
             db.close()
 
     def save(self, user_id: str, session_id: str, messages: list, metadata: dict = None, extra_message_data: list = None):
-        """保存对话"""
+        """保存完整会话快照，并刷新 Redis 缓存。"""
         db = SessionLocal()
         try:
             user = db.query(User).filter(User.username == user_id).first()
@@ -183,7 +191,7 @@ class ConversationStorage:
             db.close()
 
     def load(self, user_id: str, session_id: str) -> list:
-        """加载对话"""
+        """加载对话并转换为 LangChain 消息对象。"""
         cached = cache.get_json(self._messages_cache_key(user_id, session_id))
         if cached is not None:
             return self._to_langchain_messages(cached)
@@ -245,6 +253,7 @@ class ConversationStorage:
             db.close()
 
     def get_session_messages(self, user_id: str, session_id: str) -> list[dict]:
+        """读取前端需要的原始消息结构。"""
         cached = cache.get_json(self._messages_cache_key(user_id, session_id))
         if cached is not None:
             return cached
@@ -308,6 +317,7 @@ class ConversationStorage:
 
 
 def create_agent_instance():
+    """创建带 RAG 工具的 Mindful Curator Agent。"""
     api_key, model_name, base_url = _current_model_settings()
     model = init_chat_model(
         model=model_name,
@@ -320,19 +330,21 @@ def create_agent_instance():
 
     agent = create_agent(
         model=model,
-        tools=[get_current_weather, search_knowledge_base],
+        tools=[search_knowledge_base],
         system_prompt=(
             "You are The Mindful Curator, a warm and emotionally attuned self-analysis companion for PsycheArchive. "
             "You should feel like a thoughtful, trustworthy friend who can think clearly, not like a cold analyst. "
             "Help users examine patterns, values, tensions, emotions, habits, and possible cognitive reframing. "
-            "When replying, usually follow this rhythm: "
-            "1) briefly acknowledge the user's feeling or inner tension in a human way; "
-            "2) reflect back the core pattern in the user's own language when possible; "
-            "3) offer gentle analysis or reframing; "
-            "4) end with one soft follow-up question or one optional next step. "
+            "Write like a reflective short essay or a warm letter, not like an analysis report. "
+            "In most replies, use 2 to 5 natural paragraphs with smooth transitions. "
+            "Let the structure be carried by prose: begin by acknowledging the user's felt experience, "
+            "then gently name the pattern you notice, then offer one grounded reframing, and close with "
+            "one soft question or one optional next step. "
             "Keep the tone warm, gentle, grounded, and natural. "
             "Avoid sounding clinical, robotic, preachy, or overly formal. "
-            "Do not overuse lists unless structure is truly helpful. "
+            "Avoid headings, numbered lists, bullet points, tables, frameworks, and phrases like 'first, second, third' "
+            "unless the user explicitly asks for a list or a safety situation requires clear steps. "
+            "Do not announce a method or write meta labels such as 'analysis', 'reframe', or 'next step'. "
             "Do not flood the user with advice. "
             "Do not sound like a therapist writing an assessment report. "
             "Do not use exaggerated comfort, fake intimacy, or grand emotional language. "
@@ -348,6 +360,7 @@ def create_agent_instance():
             "and use it as the primary basis of the analysis. "
             "If both Essay Context and Knowledge Context are present, analyze the essay first and use the knowledge context only as support. "
             "Begin from the user's own writing and let the knowledge context gently illuminate it, not overpower it. "
+            "When using retrieved context, weave it into the prose quietly instead of listing sources or dumping excerpts. "
             "Do not ask the user to paste a specific uploaded essay again unless search_knowledge_base returns no relevant content. "
             "If the retrieved context is insufficient, say what is uncertain instead of inventing citations. "
             "Offer exercises as optional suggestions, not prescriptions. "
@@ -364,6 +377,7 @@ storage = ConversationStorage()
 
 
 def _merge_session_context(existing: dict | None, incoming: dict | None) -> dict:
+    """合并已保存会话状态和本次请求状态，确保随笔绑定逻辑稳定。"""
     merged = storage._normalized_session_metadata(existing)
     for key in ("analysis_mode", "active_essay_id", "active_essay_title"):
         value = (incoming or {}).get(key)
@@ -404,7 +418,7 @@ def chat_with_agent(
     session_id: str = "default_session",
     session_context: dict | None = None,
 ):
-    """使用 Agent 处理用户消息并返回响应"""
+    """使用 Agent 处理用户消息并返回一次性响应。"""
     current_agent, current_model = _ensure_agent_instance()
     messages = storage.load(user_id, session_id)
     resolved_session_context = _merge_session_context(storage.get_session_metadata(user_id, session_id), session_context)
@@ -567,7 +581,7 @@ async def chat_with_agent_stream(
         set_current_rag_user(None)
         set_current_rag_session_context(None)
         if not agent_task.done():
-             agent_task.cancel()
+            agent_task.cancel()
 
     # 获取 RAG trace
     rag_context = get_last_rag_context(clear=True)

@@ -1,7 +1,14 @@
+"""FastAPI 请求/响应模型。
+
+这些 Pydantic schema 是前后端契约：routes/* 返回这些结构，frontend/script.js
+按相同字段渲染会话、引用、上传进度、洞察和时间线。
+"""
+
 from pydantic import BaseModel
 from typing import Any, Optional, List
 
 
+# 认证与当前用户
 class RegisterRequest(BaseModel):
     username: str
     password: str
@@ -26,6 +33,7 @@ class CurrentUserResponse(BaseModel):
     role: str
 
 
+# 对话与 RAG trace
 class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = "default_session"
@@ -83,6 +91,7 @@ class ChatResponse(BaseModel):
     rag_trace: Optional[RagTrace] = None
 
 
+# 会话列表与历史消息
 class MessageInfo(BaseModel):
     type: str
     content: str
@@ -124,6 +133,7 @@ class DailyQuoteResponse(BaseModel):
     fallback: bool
 
 
+# 公共知识库文档
 class DocumentInfo(BaseModel):
     filename: str
     file_type: str
@@ -148,6 +158,7 @@ class DocumentDeleteResponse(BaseModel):
     message: str
 
 
+# 私密随笔
 class EssayInfo(BaseModel):
     essay_id: Optional[str] = None
     title: Optional[str] = None
@@ -168,6 +179,7 @@ class EssayDeleteResponse(BaseModel):
     message: str
 
 
+# 洞察与时间线聚合视图
 class InsightTotals(BaseModel):
     essays: int
     sessions: int

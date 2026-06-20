@@ -80,6 +80,7 @@ def list_public_document_activity() -> list[dict]:
 
 def build_insights_payload(essays: list[dict], sessions: list[dict], documents: list[dict] | None = None) -> dict:
     documents = documents or []
+    # insights 页只做轻量聚合：主题词、最近活动和最近内容，不引入新的持久化结构。
     theme_counter: Counter[str] = Counter()
     activity = defaultdict(lambda: {"essays": 0, "sessions": 0, "documents": 0})
 
@@ -167,6 +168,7 @@ def build_timeline_payload(essays: list[dict], sessions: list[dict], documents: 
     groups: list[dict] = []
     current_group: dict | None = None
     for event in events:
+        # 前端按天展示时间线，这里直接预分组，避免客户端重复做日期归并。
         date_key = event["timestamp"][:10]
         if current_group is None or current_group["date"] != date_key:
             current_group = {"date": date_key, "items": []}

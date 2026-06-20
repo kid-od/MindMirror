@@ -39,6 +39,7 @@ def _write_png(width: int, height: int, rows: list[bytes], output_path: Path) ->
     output_path.parent.mkdir(parents=True, exist_ok=True)
     raw = b"".join(b"\x00" + row for row in rows)
     ihdr = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    # 直接写标准 PNG 数据块，避免为了占位封面再额外依赖 Pillow。
     png = b"".join(
         [
             b"\x89PNG\r\n\x1a\n",
@@ -97,6 +98,7 @@ def render_quicklook_cover(file_path: Path, output_path: Path) -> bool:
         return False
 
     with TemporaryDirectory() as tmpdir:
+        # macOS 上优先走 Quick Look，能拿到更接近真实书封的首图缩略图。
         result = subprocess.run(
             [qlmanage, "-t", "-s", "720", "-o", tmpdir, str(file_path)],
             capture_output=True,
@@ -122,6 +124,7 @@ def ensure_document_cover(file_path: Path, filename: str, file_type: str, base_d
     if cover_path.exists() and int(cover_path.stat().st_mtime) >= source_mtime:
         return cover_path
 
+    # 真实预览拿不到时，再回退到本地生成的占位封面，确保知识库卡片始终有稳定视觉占位。
     if render_quicklook_cover(file_path, cover_path):
         return cover_path
 
